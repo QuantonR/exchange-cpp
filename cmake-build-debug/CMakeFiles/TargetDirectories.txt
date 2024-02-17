@@ -1,0 +1,3 @@
+/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles/edit_cache.dir
+/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles/exchange_cpp.dir
