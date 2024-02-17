@@ -129,78 +129,6 @@ exchange_cpp/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/build
 .PHONY : exchange_cpp/fast
 
-Book.o: Book.cpp.o
-.PHONY : Book.o
-
-# target to build an object file
-Book.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Book.cpp.o
-.PHONY : Book.cpp.o
-
-Book.i: Book.cpp.i
-.PHONY : Book.i
-
-# target to preprocess a source file
-Book.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Book.cpp.i
-.PHONY : Book.cpp.i
-
-Book.s: Book.cpp.s
-.PHONY : Book.s
-
-# target to generate assembly for a file
-Book.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Book.cpp.s
-.PHONY : Book.cpp.s
-
-Limit.o: Limit.cpp.o
-.PHONY : Limit.o
-
-# target to build an object file
-Limit.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Limit.cpp.o
-.PHONY : Limit.cpp.o
-
-Limit.i: Limit.cpp.i
-.PHONY : Limit.i
-
-# target to preprocess a source file
-Limit.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Limit.cpp.i
-.PHONY : Limit.cpp.i
-
-Limit.s: Limit.cpp.s
-.PHONY : Limit.s
-
-# target to generate assembly for a file
-Limit.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Limit.cpp.s
-.PHONY : Limit.cpp.s
-
-Order.o: Order.cpp.o
-.PHONY : Order.o
-
-# target to build an object file
-Order.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Order.cpp.o
-.PHONY : Order.cpp.o
-
-Order.i: Order.cpp.i
-.PHONY : Order.i
-
-# target to preprocess a source file
-Order.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Order.cpp.i
-.PHONY : Order.cpp.i
-
-Order.s: Order.cpp.s
-.PHONY : Order.s
-
-# target to generate assembly for a file
-Order.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/Order.cpp.s
-.PHONY : Order.cpp.s
-
 main.o: main.cpp.o
 .PHONY : main.o
 
@@ -225,6 +153,78 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+src/Book.o: src/Book.cpp.o
+.PHONY : src/Book.o
+
+# target to build an object file
+src/Book.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Book.cpp.o
+.PHONY : src/Book.cpp.o
+
+src/Book.i: src/Book.cpp.i
+.PHONY : src/Book.i
+
+# target to preprocess a source file
+src/Book.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Book.cpp.i
+.PHONY : src/Book.cpp.i
+
+src/Book.s: src/Book.cpp.s
+.PHONY : src/Book.s
+
+# target to generate assembly for a file
+src/Book.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Book.cpp.s
+.PHONY : src/Book.cpp.s
+
+src/Limit.o: src/Limit.cpp.o
+.PHONY : src/Limit.o
+
+# target to build an object file
+src/Limit.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Limit.cpp.o
+.PHONY : src/Limit.cpp.o
+
+src/Limit.i: src/Limit.cpp.i
+.PHONY : src/Limit.i
+
+# target to preprocess a source file
+src/Limit.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Limit.cpp.i
+.PHONY : src/Limit.cpp.i
+
+src/Limit.s: src/Limit.cpp.s
+.PHONY : src/Limit.s
+
+# target to generate assembly for a file
+src/Limit.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Limit.cpp.s
+.PHONY : src/Limit.cpp.s
+
+src/Order.o: src/Order.cpp.o
+.PHONY : src/Order.o
+
+# target to build an object file
+src/Order.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Order.cpp.o
+.PHONY : src/Order.cpp.o
+
+src/Order.i: src/Order.cpp.i
+.PHONY : src/Order.i
+
+# target to preprocess a source file
+src/Order.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Order.cpp.i
+.PHONY : src/Order.cpp.i
+
+src/Order.s: src/Order.cpp.s
+.PHONY : src/Order.s
+
+# target to generate assembly for a file
+src/Order.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/exchange_cpp.dir/build.make CMakeFiles/exchange_cpp.dir/src/Order.cpp.s
+.PHONY : src/Order.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -234,18 +234,18 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... exchange_cpp"
-	@echo "... Book.o"
-	@echo "... Book.i"
-	@echo "... Book.s"
-	@echo "... Limit.o"
-	@echo "... Limit.i"
-	@echo "... Limit.s"
-	@echo "... Order.o"
-	@echo "... Order.i"
-	@echo "... Order.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... src/Book.o"
+	@echo "... src/Book.i"
+	@echo "... src/Book.s"
+	@echo "... src/Limit.o"
+	@echo "... src/Limit.i"
+	@echo "... src/Limit.s"
+	@echo "... src/Order.o"
+	@echo "... src/Order.i"
+	@echo "... src/Order.s"
 .PHONY : help
 
 
