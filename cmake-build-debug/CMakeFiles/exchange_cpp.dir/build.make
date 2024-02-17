@@ -79,17 +79,62 @@ CMakeFiles/exchange_cpp.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/exchange_cpp.dir/main.cpp.s"
 	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /cygdrive/c/exchange-cpp/main.cpp -o CMakeFiles/exchange_cpp.dir/main.cpp.s
 
+CMakeFiles/exchange_cpp.dir/Book.cpp.o: CMakeFiles/exchange_cpp.dir/flags.make
+CMakeFiles/exchange_cpp.dir/Book.cpp.o: ../Book.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/exchange_cpp.dir/Book.cpp.o"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/exchange_cpp.dir/Book.cpp.o -c /cygdrive/c/exchange-cpp/Book.cpp
+
+CMakeFiles/exchange_cpp.dir/Book.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/exchange_cpp.dir/Book.cpp.i"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /cygdrive/c/exchange-cpp/Book.cpp > CMakeFiles/exchange_cpp.dir/Book.cpp.i
+
+CMakeFiles/exchange_cpp.dir/Book.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/exchange_cpp.dir/Book.cpp.s"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /cygdrive/c/exchange-cpp/Book.cpp -o CMakeFiles/exchange_cpp.dir/Book.cpp.s
+
+CMakeFiles/exchange_cpp.dir/Order.cpp.o: CMakeFiles/exchange_cpp.dir/flags.make
+CMakeFiles/exchange_cpp.dir/Order.cpp.o: ../Order.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/exchange_cpp.dir/Order.cpp.o"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/exchange_cpp.dir/Order.cpp.o -c /cygdrive/c/exchange-cpp/Order.cpp
+
+CMakeFiles/exchange_cpp.dir/Order.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/exchange_cpp.dir/Order.cpp.i"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /cygdrive/c/exchange-cpp/Order.cpp > CMakeFiles/exchange_cpp.dir/Order.cpp.i
+
+CMakeFiles/exchange_cpp.dir/Order.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/exchange_cpp.dir/Order.cpp.s"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /cygdrive/c/exchange-cpp/Order.cpp -o CMakeFiles/exchange_cpp.dir/Order.cpp.s
+
+CMakeFiles/exchange_cpp.dir/Limit.cpp.o: CMakeFiles/exchange_cpp.dir/flags.make
+CMakeFiles/exchange_cpp.dir/Limit.cpp.o: ../Limit.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/exchange_cpp.dir/Limit.cpp.o"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/exchange_cpp.dir/Limit.cpp.o -c /cygdrive/c/exchange-cpp/Limit.cpp
+
+CMakeFiles/exchange_cpp.dir/Limit.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/exchange_cpp.dir/Limit.cpp.i"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /cygdrive/c/exchange-cpp/Limit.cpp > CMakeFiles/exchange_cpp.dir/Limit.cpp.i
+
+CMakeFiles/exchange_cpp.dir/Limit.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/exchange_cpp.dir/Limit.cpp.s"
+	/usr/bin/c++.exe $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /cygdrive/c/exchange-cpp/Limit.cpp -o CMakeFiles/exchange_cpp.dir/Limit.cpp.s
+
 # Object files for target exchange_cpp
 exchange_cpp_OBJECTS = \
-"CMakeFiles/exchange_cpp.dir/main.cpp.o"
+"CMakeFiles/exchange_cpp.dir/main.cpp.o" \
+"CMakeFiles/exchange_cpp.dir/Book.cpp.o" \
+"CMakeFiles/exchange_cpp.dir/Order.cpp.o" \
+"CMakeFiles/exchange_cpp.dir/Limit.cpp.o"
 
 # External object files for target exchange_cpp
 exchange_cpp_EXTERNAL_OBJECTS =
 
 exchange_cpp.exe: CMakeFiles/exchange_cpp.dir/main.cpp.o
+exchange_cpp.exe: CMakeFiles/exchange_cpp.dir/Book.cpp.o
+exchange_cpp.exe: CMakeFiles/exchange_cpp.dir/Order.cpp.o
+exchange_cpp.exe: CMakeFiles/exchange_cpp.dir/Limit.cpp.o
 exchange_cpp.exe: CMakeFiles/exchange_cpp.dir/build.make
 exchange_cpp.exe: CMakeFiles/exchange_cpp.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable exchange_cpp.exe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/cygdrive/c/exchange-cpp/cmake-build-debug/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking CXX executable exchange_cpp.exe"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/exchange_cpp.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

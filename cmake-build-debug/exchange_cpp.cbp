@@ -80,6 +80,24 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/cygdrive/c/exchange-cpp/Book.cpp">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/Book.h">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/Limit.cpp">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/Limit.h">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/Order.cpp">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/Order.h">
+			<Option target="exchange_cpp"/>
+		</Unit>
 		<Unit filename="/cygdrive/c/exchange-cpp/main.cpp">
 			<Option target="exchange_cpp"/>
 		</Unit>

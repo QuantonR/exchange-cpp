@@ -1,4 +1,7 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/exchange_cpp.dir/Book.cpp.o"
+  "CMakeFiles/exchange_cpp.dir/Limit.cpp.o"
+  "CMakeFiles/exchange_cpp.dir/Order.cpp.o"
   "CMakeFiles/exchange_cpp.dir/main.cpp.o"
   "exchange_cpp.exe"
   "exchange_cpp.pdb"
