@@ -5,7 +5,7 @@
 		<Option title="exchange_cpp"/>
 		<Option makefile_is_custom="1"/>
 		<Option compiler="gcc"/>
-		<Option virtualFolders="CMake Files\;"/>
+		<Option virtualFolders="CMake Files\;CMake Files\cpp_packages\;CMake Files\cpp_packages\vcpkg\;CMake Files\cpp_packages\vcpkg\scripts\;CMake Files\cpp_packages\vcpkg\scripts\buildsystems\;"/>
 		<Build>
 			<Target title="all">
 				<Option working_dir="/cygdrive/c/exchange-cpp/cmake-build-debug"/>
@@ -83,8 +83,29 @@
 		<Unit filename="/cygdrive/c/exchange-cpp/main.cpp">
 			<Option target="exchange_cpp"/>
 		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/src/Book.cpp">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/src/Book.h">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/src/Limit.cpp">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/src/Limit.h">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/src/Order.cpp">
+			<Option target="exchange_cpp"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/src/Order.h">
+			<Option target="exchange_cpp"/>
+		</Unit>
 		<Unit filename="/cygdrive/c/exchange-cpp/CMakeLists.txt">
 			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="/cygdrive/c/exchange-cpp/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake">
+			<Option virtualFolder="CMake Files\cpp_packages\vcpkg\scripts\buildsystems\"/>
 		</Unit>
 	</Project>
 </CodeBlocks_project_file>

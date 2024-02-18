@@ -3,7 +3,7 @@ set(CMAKE_HOST_SYSTEM_NAME "CYGWIN")
 set(CMAKE_HOST_SYSTEM_VERSION "3.2.0(0.340/5/3)")
 set(CMAKE_HOST_SYSTEM_PROCESSOR "x86_64")
 
-
+include("C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 set(CMAKE_SYSTEM "CYGWIN-3.2.0(0.340/5/3)")
 set(CMAKE_SYSTEM_NAME "CYGWIN")
