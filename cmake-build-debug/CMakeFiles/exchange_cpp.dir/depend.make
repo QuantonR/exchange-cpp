@@ -3,3 +3,16 @@
 
 CMakeFiles/exchange_cpp.dir/main.cpp.o: \
  ../main.cpp
+CMakeFiles/exchange_cpp.dir/src/Book.cpp.o: \
+ ../src/Book.cpp \
+ ../src/Book.h \
+ ../src/Limit.h \
+ ../src/Order.h
+CMakeFiles/exchange_cpp.dir/src/Limit.cpp.o: \
+ ../src/Limit.cpp \
+ ../src/Limit.h \
+ ../src/Order.h
+CMakeFiles/exchange_cpp.dir/src/Order.cpp.o: \
+ ../src/Limit.h \
+ ../src/Order.cpp \
+ ../src/Order.h

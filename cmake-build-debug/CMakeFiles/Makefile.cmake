@@ -10,6 +10,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeCInformation.cmake"
   "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeCXXInformation.cmake"
   "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeCommonLanguageInclude.cmake"
+  "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeDependentOption.cmake"
   "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeExtraGeneratorDetermineCompilerMacrosAndIncludeDirs.cmake"
   "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeFindCodeBlocks.cmake"
   "/cygdrive/c/Users/Riccardo/AppData/Local/JetBrains/CLion2021.2/cygwin_cmake/share/cmake-3.20.2/Modules/CMakeGenericSystem.cmake"
@@ -34,6 +35,7 @@ set(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/3.20.2/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.20.2/CMakeRCCompiler.cmake"
   "CMakeFiles/3.20.2/CMakeSystem.cmake"
+  "C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake"
   )
 
 # The corresponding makefile is:
