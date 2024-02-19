@@ -6,7 +6,7 @@
 #define EXCHANGE_CPP_LIMIT_H
 
 #include "Order.h"
-
+class Order;
 class Limit {
 
     /* Here is an overview of the variables in the limit class:
