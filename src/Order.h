@@ -5,7 +5,11 @@
 #ifndef EXCHANGE_CPP_ORDER_H
 #define EXCHANGE_CPP_ORDER_H
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "Limit.h"
+
 class Limit;
 class Order {
     /* Here is an overview of the variables in the Order class:

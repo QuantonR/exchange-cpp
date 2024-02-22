@@ -14,4 +14,3 @@ Book::Book() : buyTree(nullptr),
                lowestSell(nullptr),
                highestBuy(nullptr){};
 
-

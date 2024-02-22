@@ -23,6 +23,7 @@ class Book {
 public:
     Book();
     Book(Limit *buyTree, Limit *sellTree, Limit *lowestSell, Limit *highestBuy);
+    const void addOrder();
 };
 
 #endif //EXCHANGE_CPP_BOOK_H
