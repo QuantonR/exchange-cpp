@@ -1,0 +1,4 @@
+ToolSet: 3.2.0 (local)@C:\cygwin64
+Options: 
+
+Options:-DCMAKE_TOOLCHAIN_FILE=C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake

@@ -1,0 +1,27 @@
+"C:\Program Files\JetBrains\CLion 2023.3.4\bin\cmake\win\x64\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake -G "CodeBlocks - NMake Makefiles" -S C:\exchange-cpp -B C:\exchange-cpp\cmake-build-debug-visual-studio
+CMake Deprecation Warning:
+  Support for "Extra Generators" like
+
+    CodeBlocks
+
+  is deprecated and will be removed from a future version of CMake.  IDEs may
+  use the cmake-file-api(7) to view CMake-generated project build trees.
+
+
+-- The C compiler identification is MSVC 19.39.33519.0
+-- The CXX compiler identification is MSVC 19.39.33519.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ZLIB: optimized;C:/cpp_packages/vcpkg/installed/x64-windows/lib/zlib.lib;debug;C:/cpp_packages/vcpkg/installed/x64-windows/debug/lib/zlibd.lib (found suitable version "1.3.1", minimum required is "1")  
+-- Found nlohmann_json: C:/cpp_packages/vcpkg/installed/x64-windows/share/nlohmann_json/nlohmann_jsonConfig.cmake (found version "3.11.3") 
+-- Configuring done (8.1s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/exchange-cpp/cmake-build-debug-visual-studio
