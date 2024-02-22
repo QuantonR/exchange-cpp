@@ -17,7 +17,7 @@ class Order {
      *  the quantity (shares), the price (limit) and the timestamps (entryTime for when the order is submitted and eventTime for the last time any event (like modifications, partial fills or cancellations affected the order).
      * -nextOrder, prevOrder: These are pointers that link the Order instances together. This is critical for order execution logic, ensuring that orders are processed in the correct sequence.
      */
-    int idNumber;
+    const std::string idNumber;
     bool orderType;
     int shares;
     int limit;
@@ -28,10 +28,13 @@ class Order {
     Limit *parentLimit;
 
 public:
-    Order(int idNumber, bool orderType, int shares, int limit, int entryTime, int eventTime, Order *nextOrder, Order *prevOrder,
+    Order(std::string idNumber, bool orderType, int shares, int limit, int entryTime, int eventTime, Order *nextOrder, Order *prevOrder,
           Limit *parentLimit);
 
+    Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit);
+
     Order();
+    const std::string generateUuid();
 };
 
 

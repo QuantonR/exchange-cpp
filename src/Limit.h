@@ -30,6 +30,20 @@ class Limit {
 public:
     Limit();
 
+    int getLimitPrice() const;
+
+    void setHeadOrder(Order *headOrder);
+
+    void setTailOrder(Order *tailOrder);
+
+    int getSize() const;
+
+    int getTotalVolume() const;
+
+    Order *getHeadOrder() const;
+
+    Order *getTailOrder() const;
+
     Limit(int limitPrice, int size, int totalVolume, Limit *parent, Limit *leftChild, Limit *rightChild,
           Order *headOrder, Order *tailOrder);
 };
