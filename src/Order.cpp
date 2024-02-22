@@ -21,8 +21,8 @@ Order::Order(bool orderType, int shares, int limit, int entryTime, int eventTime
     if (nextOrder == nullptr) {
         parentLimit->setTailOrder(this);
         parentLimit->setHeadOrder(this);
-        this->nextOrder = this;
-        this->prevOrder = this;
+        this->nextOrder = nullptr;
+        this->prevOrder = nullptr;
     } else {
         this->prevOrder = nextOrder;
         this->nextOrder = nullptr;
