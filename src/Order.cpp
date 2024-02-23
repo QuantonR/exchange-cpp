@@ -15,7 +15,9 @@ Order::Order() : idNumber("0"), orderType(true), shares(0), limit(0), entryTime(
                  eventTime(0), nextOrder(nullptr), prevOrder(nullptr),
                  parentLimit(nullptr) {}
 
-Order::Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit) {
+Order::Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit) :
+                idNumber(Order::generateUuid()), orderType(orderType), shares(shares), limit(limit),
+                entryTime(entryTime), eventTime(eventTime){
 
     auto nextOrder = parentLimit->getTailOrder();
     if (nextOrder == nullptr) {
@@ -28,11 +30,6 @@ Order::Order(bool orderType, int shares, int limit, int entryTime, int eventTime
         this->nextOrder = nullptr;
         parentLimit->setTailOrder(this);
     }
-    this->orderType = orderType;
-    this->shares = shares;
-    this->limit = limit;
-    this->entryTime = entryTime;
-    this->eventTime = eventTime;
 }
 
 const std::string Order::generateUuid() {

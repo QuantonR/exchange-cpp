@@ -34,7 +34,7 @@ public:
     Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit);
 
     Order();
-    const std::string generateUuid();
+    static const std::string generateUuid();
 };
 
 
