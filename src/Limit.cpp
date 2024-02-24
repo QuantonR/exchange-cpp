@@ -4,15 +4,21 @@
 
 #include "Limit.h"
 
-Limit::Limit(int limitPrice, int size, int totalVolume, Limit *parent) : limitPrice(limitPrice), size(size), totalVolume(totalVolume),
-                                                   parent(parent) {
-
-
-};
-
 Limit::Limit() : limitPrice(0), size(0), totalVolume(0),
                  parent(nullptr), leftChild(nullptr), rightChild(nullptr),
                  headOrder(nullptr), tailOrder(nullptr) {}
+
+Limit::Limit(int limitPrice, int size, int totalVolume, int entryTime, bool orderType, Limit *parent) : limitPrice(limitPrice), size(size), totalVolume(totalVolume),
+                                                   parent(parent) {
+
+    Order newOrder = Order(orderType, size, limitPrice, entryTime, entryTime,this);
+
+};
+
+void addLimit(Limit *parent, Limit *limitToAdd){
+
+
+};
 
 int Limit::getLimitPrice() const {
     return limitPrice;

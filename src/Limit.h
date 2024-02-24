@@ -44,7 +44,9 @@ public:
 
     Order *getTailOrder() const;
 
-    Limit(int limitPrice, int size, int totalVolume, Limit *parent);
+    Limit(int limitPrice, int size, int totalVolume, int entryTime, bool orderType, Limit *parent);
+
+    void addLimit(Limit *parent, Limit *limitToAdd);
 };
 
 
