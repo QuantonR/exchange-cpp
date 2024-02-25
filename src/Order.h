@@ -28,12 +28,11 @@ class Order {
     Limit *parentLimit;
 
 public:
-    Order(std::string idNumber, bool orderType, int shares, int limit, int entryTime, int eventTime, Order *nextOrder, Order *prevOrder,
-          Limit *parentLimit);
 
     Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit);
 
     Order();
+
     static const std::string generateUuid();
 };
 
