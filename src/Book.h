@@ -23,7 +23,24 @@ class Book {
 public:
     Book();
     Book(Limit *buyTree, Limit *sellTree, Limit *lowestSell, Limit *highestBuy);
-    const void addOrder();
+
+    Limit *getBuyTree() const;
+
+    Limit *getSellTree() const;
+
+    Limit *getLowestSell() const;
+
+    Limit *getHighestBuy() const;
+
+    void setBuyTree(Limit *buyTree);
+
+    void setSellTree(Limit *sellTree);
+
+    void setLowestSell(Limit *lowestSell);
+
+    void setHighestBuy(Limit *highestBuy);
+
+    const void addLimitOrder(bool orderType);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H
