@@ -44,6 +44,10 @@ public:
 
     Order *getTailOrder() const;
 
+    Limit *getLeftChild() const;
+
+    Limit *getRightChild() const;
+
     void setParent(Limit *parent);
 
     void setLeftChild(Limit *leftChild);
@@ -51,6 +55,8 @@ public:
     void setRightChild(Limit *rightChild);
 
     void setLimitPrice(int limitPrice);
+
+    Limit(int limitPrice, int size, Limit *parent);
 
     void addOrder(Limit *parent, bool orderType, int size, int entryTime, int eventType);
 

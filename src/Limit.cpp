@@ -8,6 +8,8 @@ Limit::Limit() : limitPrice(0), size(0), totalVolume(0),
                  parent(nullptr), leftChild(nullptr), rightChild(nullptr),
                  headOrder(nullptr), tailOrder(nullptr) {}
 
+Limit::Limit(int limitPrice, int size, Limit *parent) : limitPrice(limitPrice), size(1), totalVolume(size), parent(parent), leftChild(nullptr), rightChild(nullptr) {};
+
 void Limit::addOrder(Limit *parent, bool orderType, int size, int entryTime, int eventType){
 
     this -> totalVolume += size;
@@ -69,5 +71,14 @@ void Limit::setLeftChild(Limit *leftChild) {
 
 void Limit::setRightChild(Limit *rightChild) {
     Limit::rightChild = rightChild;
-};
+}
+
+Limit *Limit::getLeftChild() const {
+    return leftChild;
+}
+
+Limit *Limit::getRightChild() const {
+    return rightChild;
+}
+
 
