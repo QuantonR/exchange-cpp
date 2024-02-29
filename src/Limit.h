@@ -28,7 +28,6 @@ class Limit {
     Order *tailOrder;
 
 public:
-    Limit();
 
     int getLimitPrice() const;
 
@@ -58,7 +57,7 @@ public:
 
     Limit(int limitPrice, int size, Limit *parent);
 
-    void addOrder(Limit *parent, bool orderType, int size, int entryTime, int eventType);
+    void addOrder(bool orderType, int size, int entryTime, int eventType);
 
     void addLimit(Limit *parent, bool orderType, int size, int entryTime, int eventType, int limitPrice);
 };

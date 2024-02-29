@@ -32,7 +32,7 @@ public:
 
     Limit *getHighestBuy() const;
 
-    void setBuyTree(std::unique_ptr<Limit> buyTree);
+    void setBuyTree(Limit *buyTree);
 
     void setSellTree(Limit *sellTree);
 

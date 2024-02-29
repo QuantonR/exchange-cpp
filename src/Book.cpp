@@ -36,10 +36,10 @@ void Book::searchForLimit(Limit* tree, int size, int entryTime, int eventType, i
         // You might need to adjust the constructor call based on the actual parameters of the Limit constructor
     } else if (limitPrice < tree->getLimitPrice()) {
         // Go left if the new limit's price is less than the current node's price
-        searchForLimit(tree->getLeftChild(), size, entryTime, eventType, limitPrice);
+        searchForLimit(tree->getLeftChild(), size, entryTime, eventType, limitPrice, orderType);
     } else if (limitPrice > tree->getLimitPrice()) {
         // Go right otherwise
-        searchForLimit(tree->getRightChild(), size, entryTime, eventType, limitPrice);
+        searchForLimit(tree->getRightChild(), size, entryTime, eventType, limitPrice, orderType);
     } else if (limitPrice == tree->getLimitPrice()){
         tree -> addOrder(tree, orderType, size, entryTime, eventType);
     }
@@ -61,7 +61,7 @@ Limit *Book::getHighestBuy() const {
     return highestBuy;
 }
 
-void Book::setBuyTree(std::unique_ptr<Limit> buyTree) {
+void Book::setBuyTree(Limit *buyTree) {
     Book::buyTree = buyTree;
 }
 

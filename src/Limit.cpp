@@ -4,17 +4,23 @@
 
 #include "Limit.h"
 
-Limit::Limit() : limitPrice(0), size(0), totalVolume(0),
-                 parent(nullptr), leftChild(nullptr), rightChild(nullptr),
-                 headOrder(nullptr), tailOrder(nullptr) {}
 
 Limit::Limit(int limitPrice, int size, Limit *parent) : limitPrice(limitPrice), size(1), totalVolume(size), parent(parent), leftChild(nullptr), rightChild(nullptr) {};
 
-void Limit::addOrder(Limit *parent, bool orderType, int size, int entryTime, int eventType){
+void Limit::addOrder(bool orderType, int size, int entryTime, int eventType){
 
     this -> totalVolume += size;
     this -> size += 1;
-    Order newOrder = Order(orderType, size , this -> getLimitPrice(), entryTime, eventType, this);
+    Order* newOrder = new Order(orderType, size , this -> getLimitPrice(), entryTime, eventType, this);
+    auto nextOrder = this->getTailOrder();
+    if (nextOrder == nullptr) {
+        this->setTailOrder(newOrder);
+        this->setHeadOrder(newOrder);
+    } else {
+        newOrder->setPrevOrder(nextOrder);
+        newOrder->setNextOrder(nullptr);
+        this->setTailOrder(newOrder);
+    }
 };
 
 void Limit::addLimit(Limit *parent, bool orderType, int size, int entryTime, int eventType, int limitPrice){
@@ -26,7 +32,7 @@ void Limit::addLimit(Limit *parent, bool orderType, int size, int entryTime, int
     } else {
         parent->setLeftChild(this);
     }
-    addOrder(parent, orderType, size, entryTime, eventType);
+    addOrder(orderType, size, entryTime, eventType);
 }
 
 int Limit::getLimitPrice() const {

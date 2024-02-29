@@ -34,6 +34,10 @@ public:
     Order();
 
     static const std::string generateUuid();
+
+    void setNextOrder(Order *nextOrder);
+
+    void setPrevOrder(Order *prevOrder);
 };
 
 
