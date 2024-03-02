@@ -4,11 +4,6 @@
 
 #include "Book.h"
 
-Book::Book(Limit *buyTree, Limit *sellTree, Limit *lowestSell, Limit *highestBuy) : buyTree(buyTree),
-                                                                                    sellTree(sellTree),
-                                                                                    lowestSell(lowestSell),
-                                                                                    highestBuy(highestBuy) {};
-
 Book::Book() : buyTree(nullptr),
                sellTree(nullptr),
                lowestSell(nullptr),
@@ -17,24 +12,52 @@ Book::Book() : buyTree(nullptr),
 const void Book::addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice){
 
     Limit* fatherTree = orderType ? this->getBuyTree() : this->getSellTree();
-    Limit* searchedLimit = searchForLimit(fatherTree, nullptr, size, limitPrice);
+    Limit* searchedLimit = addLimitToTree(fatherTree, nullptr, size, limitPrice, orderType);
+    searchedLimit -> addOrder(orderType, size, entryTime, eventType);
+    updateAfterAddingLimit(searchedLimit, orderType);
+
 };
 
-Limit* Book::searchForLimit(Limit* tree, Limit* parent, int size, int limitPrice) {
-
+Limit* Book::addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType) {
     if (tree == nullptr) {
         // Reached a leaf, insert the new Limit here
-        tree = new Limit(limitPrice, size , parent);
+        tree = new Limit(limitPrice, size, parent); // Ensure the Limit constructor is correctly defined
+
+        // If this is the root of the tree, update the buy or sell tree root
+        if (parent == nullptr) {
+            if (orderType) {
+                setBuyTree(tree);
+                setHighestBuy(tree);
+            } else {
+                setSellTree(tree);
+                setLowestSell(tree);
+            }
+        }
         return tree;
-        // You might need to adjust the constructor call based on the actual parameters of the Limit constructor
-    } else if (limitPrice < tree->getLimitPrice()) {
-        // Go left if the new limit's price is less than the current node's price
-        searchForLimit(tree->getLeftChild(), tree, size, limitPrice);
+    }
+
+    // Determine the direction to traverse based on limitPrice and recursively add the limit
+    if (limitPrice < tree->getLimitPrice()) {
+        // Recursively add to the left, updating tree's left child if it's nullptr
+        tree->setLeftChild(addLimitToTree(tree->getLeftChild(), tree, size, limitPrice, orderType));
     } else if (limitPrice > tree->getLimitPrice()) {
-        // Go right otherwise
-        searchForLimit(tree->getRightChild(), tree, size, limitPrice);
-    } else if (limitPrice == tree->getLimitPrice()){
-        return tree;
+        // Recursively add to the right, updating tree's right child if it's nullptr
+        tree->setRightChild(addLimitToTree(tree->getRightChild(), tree, size, limitPrice, orderType));
+    }
+
+    // If a limit with the exact price exists, just return the existing node
+    return tree;
+}
+
+void Book::updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder) {
+    if (isBuyOrder) {
+        if (!highestBuy || newLimit->getLimitPrice() > highestBuy->getLimitPrice()) {
+            setHighestBuy(newLimit);
+        }
+    } else {
+        if (!lowestSell || newLimit->getLimitPrice() < lowestSell->getLimitPrice()) {
+            setLowestSell(newLimit);
+        }
     }
 }
 

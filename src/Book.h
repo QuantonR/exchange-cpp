@@ -22,7 +22,6 @@ class Book {
 
 public:
     Book();
-    Book(Limit *buyTree, Limit *sellTree, Limit *lowestSell, Limit *highestBuy);
 
     Limit *getBuyTree() const;
 
@@ -42,7 +41,9 @@ public:
 
     const void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
 
-    Limit* searchForLimit(Limit* tree, Limit* parent, int size, int limitPrice);
+    Limit* addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType);
+
+    void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H
