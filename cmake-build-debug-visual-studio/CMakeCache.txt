@@ -14,6 +14,15 @@
 # EXTERNAL cache entries
 ########################
 
+//Path to a file.
+Boost_INCLUDE_DIR:PATH=C:/cpp_packages/vcpkg/installed/x64-windows/include
+
+//Boost uuid library (debug)
+Boost_UUID_LIBRARY_DEBUG:FILEPATH=Boost_UUID_LIBRARY_DEBUG-NOTFOUND
+
+//Boost uuid library (release)
+Boost_UUID_LIBRARY_RELEASE:FILEPATH=Boost_UUID_LIBRARY_RELEASE-NOTFOUND
+
 //Path to a program.
 CMAKE_AR:FILEPATH=C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.39.33519/bin/Hostx64/x64/lib.exe
 
@@ -201,8 +210,7 @@ CMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=
 // during RELWITHDEBINFO builds.
 CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 
-//The CMake toolchain file
-CMAKE_TOOLCHAIN_FILE:FILEPATH=C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake
+CMAKE_TOOLCHAIN_FILE:STRING=C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake
 
 //If this value is on, makefiles will be generated without the
 // .SILENT directive, and all commands will be echoed to the console
@@ -291,6 +299,10 @@ nlohmann_json_DIR:PATH=C:/cpp_packages/vcpkg/installed/x64-windows/share/nlohman
 # INTERNAL cache entries
 ########################
 
+//ADVANCED property for variable: Boost_UUID_LIBRARY_DEBUG
+Boost_UUID_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: Boost_UUID_LIBRARY_RELEASE
+Boost_UUID_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_AR
 CMAKE_AR-ADVANCED:INTERNAL=1
 //This is the directory where this CMakeCache.txt was created

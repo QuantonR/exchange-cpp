@@ -28,10 +28,38 @@ class Limit {
     Order *tailOrder;
 
 public:
-    Limit();
 
-    Limit(int limitPrice, int size, int totalVolume, Limit *parent, Limit *leftChild, Limit *rightChild,
-          Order *headOrder, Order *tailOrder);
+    int getLimitPrice() const;
+
+    void setHeadOrder(Order *headOrder);
+
+    void setTailOrder(Order *tailOrder);
+
+    int getSize() const;
+
+    int getTotalVolume() const;
+
+    Order *getHeadOrder() const;
+
+    Order *getTailOrder() const;
+
+    Limit *getLeftChild() const;
+
+    Limit *getRightChild() const;
+
+    void setParent(Limit *parent);
+
+    void setLeftChild(Limit *leftChild);
+
+    void setRightChild(Limit *rightChild);
+
+    void setLimitPrice(int limitPrice);
+
+    Limit(int limitPrice, int size, Limit *parent);
+
+    void addOrder(bool orderType, int size, int entryTime, int eventType);
+
+    void addLimit(Limit *parent, bool orderType, int size, int entryTime, int eventType, int limitPrice);
 };
 
 

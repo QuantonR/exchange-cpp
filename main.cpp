@@ -13,7 +13,9 @@ size_t writeCallback(void* contents, size_t size, size_t nmemb, void* userp);
 std::pair<std::vector<std::pair<double, double>>, std::vector<std::pair<double, double>>> parseOrderBook(const json& orderBook) ;
 
 int main() {
-    auto res = parseOrderBook(retrieveBitcoinOrderBook());
+    json bOrderBook = retrieveBitcoinOrderBook();
+    std::cout<<bOrderBook<<std::endl;
+    auto res = parseOrderBook(bOrderBook);
     return 0;
 }
 
@@ -70,7 +72,6 @@ std::pair<std::vector<std::pair<double, double>>, std::vector<std::pair<double, 
     for (const auto& bid : orderBook["bids"]) {
         double price = bid[0]; // Assuming the first element is price
         double quantity = bid[1]; // Assuming the second element is quantity
-        std::cout << "Bid: " << bid << std::endl;
         bids.push_back({ price, quantity });
     }
 
