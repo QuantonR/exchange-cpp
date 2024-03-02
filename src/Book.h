@@ -42,7 +42,7 @@ public:
 
     const void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
 
-    void searchForLimit(Limit* tree, int size, int entryTime, int eventType, int limitPrice, bool orderType);
+    Limit* searchForLimit(Limit* tree, Limit* parent, int size, int limitPrice);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H

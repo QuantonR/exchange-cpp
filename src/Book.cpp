@@ -16,32 +16,25 @@ Book::Book() : buyTree(nullptr),
 
 const void Book::addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice){
 
-    Limit* father = nullptr;
-    if (orderType == true){
-        // this means that it is a buy order
-
-        if (getBuyTree() == nullptr){
-
-            Limit* limitToAdd = new Limit();
-            setBuyTree(limitToAdd);
-        }
-    }
+    Limit* fatherTree = orderType ? this->getBuyTree() : this->getSellTree();
+    Limit* searchedLimit = searchForLimit(fatherTree, nullptr, size, limitPrice);
 };
 
-void Book::searchForLimit(Limit* tree, int size, int entryTime, int eventType, int limitPrice, bool orderType) {
+Limit* Book::searchForLimit(Limit* tree, Limit* parent, int size, int limitPrice) {
 
     if (tree == nullptr) {
         // Reached a leaf, insert the new Limit here
-        tree = new Limit(limitPrice, size , nullptr);
+        tree = new Limit(limitPrice, size , parent);
+        return tree;
         // You might need to adjust the constructor call based on the actual parameters of the Limit constructor
     } else if (limitPrice < tree->getLimitPrice()) {
         // Go left if the new limit's price is less than the current node's price
-        searchForLimit(tree->getLeftChild(), size, entryTime, eventType, limitPrice, orderType);
+        searchForLimit(tree->getLeftChild(), tree, size, limitPrice);
     } else if (limitPrice > tree->getLimitPrice()) {
         // Go right otherwise
-        searchForLimit(tree->getRightChild(), size, entryTime, eventType, limitPrice, orderType);
+        searchForLimit(tree->getRightChild(), tree, size, limitPrice);
     } else if (limitPrice == tree->getLimitPrice()){
-        tree -> addOrder(tree, orderType, size, entryTime, eventType);
+        return tree;
     }
 }
 
