@@ -14,6 +14,7 @@ add_executable(exchange_cpp
         src/Book.cpp
         src/Order.cpp
         src/Limit.cpp
+        Tests/test.cpp
 )
 
 target_link_libraries(exchange_cpp PRIVATE CURL::libcurl nlohmann_json::nlohmann_json Boost::uuid)

@@ -92,3 +92,24 @@ void Book::setLowestSell(Limit *lowestSell) {
 void Book::setHighestBuy(Limit *highestBuy) {
     Book::highestBuy = highestBuy;
 }
+
+void printTree(std::ostream &os, Limit* tree) {
+    if (tree == nullptr) {
+        return; // Base case: if the current node is null, do nothing
+    }
+
+    // For in-order traversal: Left, Node, Right
+    printTree(os, tree->getLeftChild()); // Recursively print the left subtree
+    os << tree->getLimitPrice() << " "; // Print the current node's limit price
+    printTree(os, tree->getRightChild()); // Recursively print the right subtree
+}
+
+std::ostream &operator<<(std::ostream &os, const Book &book) {
+    os << "Buy Tree: ";
+    printTree(os, book.getBuyTree()); // Assuming getBuyTree() returns the root of the buy tree
+    os << "\nSell Tree: ";
+    printTree(os, book.getSellTree()); // Assuming getSellTree() returns the root of the sell tree
+    os << "\nLowest Sell: " << book.getLowestSell() // Assuming getLowestSell() returns the price
+       << "\nHighest Buy: " << book.getHighestBuy(); // Assuming getHighestBuy() returns the price
+    return os;
+}

@@ -5,6 +5,7 @@
 #ifndef EXCHANGE_CPP_BOOK_H
 #define EXCHANGE_CPP_BOOK_H
 
+#include <ostream>
 #include "Limit.h"
 
 class Book {
@@ -44,6 +45,10 @@ public:
     Limit* addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType);
 
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
+
+    friend std::ostream &operator<<(std::ostream &os, const Book &book);
+
+    friend void printTree(std::ostream &os, Limit* tree);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H
