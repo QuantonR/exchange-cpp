@@ -46,9 +46,9 @@ public:
 
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
 
-    friend std::ostream &operator<<(std::ostream &os, const Book &book);
+    friend std::string toString(const Book &book);
 
-    friend void printTree(std::ostream &os, Limit* tree);
+    friend void printTree(std::ostringstream &oss, Limit* tree);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H

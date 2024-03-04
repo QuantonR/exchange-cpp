@@ -5,7 +5,7 @@ project(exchange_cpp)
 
 find_package(CURL CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(Boost REQUIRED COMPONENTS uuid)
+find_package(Boost 1.84.0 REQUIRED COMPONENTS uuid)
 
 set(CMAKE_CXX_STANDARD 20)
 
