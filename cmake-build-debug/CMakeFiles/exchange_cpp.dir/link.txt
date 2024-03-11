@@ -1,1 +1,0 @@
-/usr/bin/c++.exe -g -Wl,--enable-auto-import CMakeFiles/exchange_cpp.dir/main.cpp.o CMakeFiles/exchange_cpp.dir/src/Book.cpp.o CMakeFiles/exchange_cpp.dir/src/Order.cpp.o CMakeFiles/exchange_cpp.dir/src/Limit.cpp.o -o exchange_cpp.exe -Wl,--out-implib,libexchange_cpp.dll.a -Wl,--major-image-version,0,--minor-image-version,0 

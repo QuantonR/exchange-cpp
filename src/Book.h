@@ -48,7 +48,7 @@ public:
 
     friend std::string toString(const Book &book);
 
-    friend void printTree(std::ostringstream &oss, Limit* tree);
+    friend std::string printTree(Limit* tree);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H

@@ -5,7 +5,8 @@
 #include "Limit.h"
 
 
-Limit::Limit(int limitPrice, int size, Limit *parent) : limitPrice(limitPrice), size(1), totalVolume(size), parent(parent), leftChild(nullptr), rightChild(nullptr) {};
+Limit::Limit(int limitPrice, int size, Limit *parent) : limitPrice(limitPrice), size(1), totalVolume(size), parent(parent), leftChild(nullptr), rightChild(nullptr),
+headOrder(nullptr), tailOrder(nullptr){};
 
 void Limit::addOrder(bool orderType, int size, int entryTime, int eventType){
 
@@ -86,5 +87,3 @@ Limit *Limit::getLeftChild() const {
 Limit *Limit::getRightChild() const {
     return rightChild;
 }
-
-

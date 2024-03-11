@@ -5,7 +5,7 @@ project(exchange_cpp)
 
 find_package(CURL CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(Boost 1.84.0 REQUIRED COMPONENTS uuid)
+find_package(GTest CONFIG REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -17,4 +17,4 @@ add_executable(exchange_cpp
         Tests/test.cpp
 )
 
-target_link_libraries(exchange_cpp PRIVATE CURL::libcurl nlohmann_json::nlohmann_json Boost::uuid)
+target_link_libraries(exchange_cpp PRIVATE CURL::libcurl nlohmann_json::nlohmann_json)

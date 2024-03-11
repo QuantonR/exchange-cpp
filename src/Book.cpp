@@ -15,7 +15,6 @@ const void Book::addLimitOrder(bool orderType, int size, int entryTime, int even
     Limit* searchedLimit = addLimitToTree(fatherTree, nullptr, size, limitPrice, orderType);
     searchedLimit -> addOrder(orderType, size, entryTime, eventType);
     updateAfterAddingLimit(searchedLimit, orderType);
-
 };
 
 Limit* Book::addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType) {
@@ -93,26 +92,31 @@ void Book::setHighestBuy(Limit *highestBuy) {
     Book::highestBuy = highestBuy;
 }
 
-void printTree(std::ostringstream &oss, Limit* tree) {
-    if (tree == nullptr) {
-        return; // Base case: if the current node is null, do nothing
+std::string printTree(Limit* tree) {
+    if (!tree) {
+        return "";
     }
 
-    // For in-order traversal: Left, Node, Right
-    printTree(oss, tree->getLeftChild()); // Recursively print the left subtree
-    oss << tree->getLimitPrice() << " "; // Append the current node's limit price to the stream
-    printTree(oss, tree->getRightChild()); // Recursively print the right subtree
+    std::string left = printTree(tree->getLeftChild());
+    std::string right = printTree(tree->getRightChild());
+    std::string node = std::to_string(tree->getLimitPrice()) + " ";
+
+    return left + node + right; // In-order traversal concatenation
 }
 
-std::string toString(const Book &book) {
-    std::ostringstream oss; // Use ostringstream to build the string
+std::string toString(const Book& book) {
+    std::string str = "Buy Tree: ";
+    str += printTree(book.getBuyTree());
+    str += "\nSell Tree: ";
+    str += printTree(book.getSellTree());
 
-    oss << "Buy Tree: ";
-    printTree(oss, book.getBuyTree()); // Assuming getBuyTree() returns the root of the buy tree
-    oss << "\nSell Tree: ";
-    printTree(oss, book.getSellTree()); // Assuming getSellTree() returns the root of the sell tree
-    oss << "\nLowest Sell: " << book.getLowestSell() // Assuming getLowestSell() returns the price
-        << "\nHighest Buy: " << book.getHighestBuy(); // Assuming getHighestBuy() returns the price
+    Limit* lowestSell = book.getLowestSell();
+    str += "\nLowest Sell: ";
+    str += lowestSell ? std::to_string(lowestSell->getLimitPrice()) : "None";
 
-    return oss.str(); // Return the built string
+    Limit* highestBuy = book.getHighestBuy();
+    str += "\nHighest Buy: ";
+    str += highestBuy ? std::to_string(highestBuy->getLimitPrice()) : "None";
+
+    return str;
 }
