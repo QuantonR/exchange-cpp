@@ -5,6 +5,7 @@
 #ifndef EXCHANGE_CPP_BOOK_H
 #define EXCHANGE_CPP_BOOK_H
 
+#include <ostream>
 #include "Limit.h"
 
 class Book {
@@ -29,7 +30,7 @@ public:
 
     Limit *getLowestSell() const;
 
-    Limit *getHighestBuy() const;
+    Limit *getHighestBuy() const;-------
 
     void setBuyTree(Limit *buyTree);
 
@@ -44,6 +45,10 @@ public:
     Limit* addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType);
 
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
+
+    friend std::string toString(const Book &book);
+
+    friend std::string printTree(Limit* tree);
 };
 
 #endif //EXCHANGE_CPP_BOOK_H

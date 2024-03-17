@@ -1,0 +1,13 @@
+{
+    "cmake.configureSettings": {
+        "CMAKE_TOOLCHAIN_FILE": "C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    }
+}

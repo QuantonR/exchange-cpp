@@ -15,7 +15,6 @@ const void Book::addLimitOrder(bool orderType, int size, int entryTime, int even
     Limit* searchedLimit = addLimitToTree(fatherTree, nullptr, size, limitPrice, orderType);
     searchedLimit -> addOrder(orderType, size, entryTime, eventType);
     updateAfterAddingLimit(searchedLimit, orderType);
-
 };
 
 Limit* Book::addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType) {
@@ -91,4 +90,33 @@ void Book::setLowestSell(Limit *lowestSell) {
 
 void Book::setHighestBuy(Limit *highestBuy) {
     Book::highestBuy = highestBuy;
+}
+
+std::string printTree(Limit* tree) {
+    if (!tree) {
+        return "";
+    }
+
+    std::string left = printTree(tree->getLeftChild());
+    std::string right = printTree(tree->getRightChild());
+    std::string node = std::to_string(tree->getLimitPrice()) + " ";
+
+    return left + node + right; // In-order traversal concatenation
+}
+
+std::string toString(const Book& book) {
+    std::string str = "Buy Tree: ";
+    str += printTree(book.getBuyTree());
+    str += "\nSell Tree: ";
+    str += printTree(book.getSellTree());
+
+    Limit* lowestSell = book.getLowestSell();
+    str += "\nLowest Sell: ";
+    str += lowestSell ? std::to_string(lowestSell->getLimitPrice()) : "None";
+
+    Limit* highestBuy = book.getHighestBuy();
+    str += "\nHighest Buy: ";
+    str += highestBuy ? std::to_string(highestBuy->getLimitPrice()) : "None";
+
+    return str;
 }

@@ -38,6 +38,20 @@ public:
     void setNextOrder(Order *nextOrder);
 
     void setPrevOrder(Order *prevOrder);
+
+    int getLimit() const;
+
+    int getOrderType() const;
+
+    Order* getNextOrder() const;
+
+    Order* getPrevOrder() const;
+
+    Limit* getParentLimit() const;
+
+    int getEntryTime() const;
+
+    int getEventTime() const;
 };
 
 

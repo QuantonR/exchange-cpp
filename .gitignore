@@ -1,0 +1,11 @@
+.vs/
+
+*.exe
+
+build/
+
+build/CMakeFiles/*.txt
+
+out/
+
+main.cpp

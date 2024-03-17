@@ -29,7 +29,8 @@ Call Stack (most recent call first):
 
 
 CMake Error at C:/Program Files/JetBrains/CLion 2023.3.4/bin/cmake/win/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake:230 (message):
-  Could NOT find Boost (missing: uuid) (found version "1.84.0")
+  Could NOT find Boost (missing: uuid) (found suitable version "1.84.0",
+  minimum required is "1.84.0")
 Call Stack (most recent call first):
   C:/Program Files/JetBrains/CLion 2023.3.4/bin/cmake/win/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake:600 (_FPHSA_FAILURE_MESSAGE)
   C:/Program Files/JetBrains/CLion 2023.3.4/bin/cmake/win/x64/share/cmake-3.27/Modules/FindBoost.cmake:2392 (find_package_handle_standard_args)
