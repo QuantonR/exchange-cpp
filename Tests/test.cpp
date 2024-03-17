@@ -1,10 +1,13 @@
 #include <gtest/gtest.h>
 #include "../src/Book.h"
+#include "../src/Limit.h"
+#include "../src/Order.h"
 #include <chrono>
 
 class OrderBookTest : public ::testing::Test {
 protected:
     Book orderBook; // Assuming your order book class is named Book
+    int total_test_size = 0;
 
     void SetUp() override {
         // Initialize your orderBook here, if needed
@@ -21,10 +24,22 @@ TEST_F(OrderBookTest, AddingBuyOrderIncreasesSize) {
     auto now_c = std::chrono::system_clock::to_time_t(now);
     int now_seconds = static_cast<int>(now_c);
 
-    orderBook.addLimitOrder(true, 3, now_seconds, now_seconds, 25); // Assuming you have a method to get the size
-    // orderBook.addOrder(/* parameters for a buy order */);
-    int newSize = orderBook.getBuySize();
-    ASSERT_EQ(newSize, initialSize + 1);
+    int orderPrice = 25;
+    int insertedSize = 3;
+    orderBook.addLimitOrder(true, insertedSize, now_seconds, now_seconds, orderPrice);
+
+    total_test_size += 1;
+    int highestBuy = orderBook.getHighestBuy()->getLimitPrice();
+    Limit* lowestSell = orderBook.getLowestSell();
+    int HighestBuySize = orderBook.getHighestBuy()->getSize();
+    Order* order = orderBook.getHighestBuy() -> getHeadOrder()
+
+
+    ASSERT_EQ(highestBuy, orderPrice);
+    ASSERT_EQ(lowestSell, nullptr);
+    ASSERT_EQ(HighestBuySize, total_test_size);
+    ASSERT_EQ(highestBuy, initialSize + 1);
+
 }
 
 TEST_F(OrderBookTest, AddingLowerSellOrderUpdatesLowestSell) {

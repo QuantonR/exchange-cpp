@@ -27,4 +27,14 @@ void Order::setPrevOrder(Order *prevOrder) {
 };
 
 
+int Order::getLimit() const {
+    return limit;
+}
 
+int getOrderType() const;
+
+Order* getNextOrder() const;
+
+Order* getPrevOrder() const;
+
+Limit* getParentLimit() const;

@@ -30,7 +30,7 @@ public:
 
     Limit *getLowestSell() const;
 
-    Limit *getHighestBuy() const;
+    Limit *getHighestBuy() const;-------
 
     void setBuyTree(Limit *buyTree);
 
