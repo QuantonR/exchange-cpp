@@ -29,12 +29,39 @@ void Order::setPrevOrder(Order *prevOrder) {
 
 int Order::getLimit() const {
     return limit;
-}
+};
 
-int getOrderType() const;
+int Order::getOrderType() const {
 
-Order* getNextOrder() const;
+    return orderType;
+};
 
-Order* getPrevOrder() const;
+Order* Order::getNextOrder() const {
 
-Limit* getParentLimit() const;
+    return nextOrder;
+};
+
+Order* Order::getPrevOrder() const {
+
+    return prevOrder;
+};
+
+Limit* Order::getParentLimit() const {
+
+    return parentLimit;
+};
+
+int Order::getEntryTime() const {
+
+    return entryTime;
+};
+
+int Order::getEventTime() const {
+
+    return eventTime;
+};
+
+int Order::getShares() const {
+
+    return shares;
+};

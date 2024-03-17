@@ -8,4 +8,4 @@ build/CMakeFiles/*.txt
 
 out/
 
-/main
+main.cpp

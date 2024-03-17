@@ -48,6 +48,10 @@ public:
     Order* getPrevOrder() const;
 
     Limit* getParentLimit() const;
+
+    int getEntryTime() const;
+
+    int getEventTime() const;
 };
 
 
