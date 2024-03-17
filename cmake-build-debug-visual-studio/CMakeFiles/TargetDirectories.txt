@@ -1,3 +1,0 @@
-C:/exchange-cpp/cmake-build-debug-visual-studio/CMakeFiles/exchange_cpp.dir
-C:/exchange-cpp/cmake-build-debug-visual-studio/CMakeFiles/edit_cache.dir
-C:/exchange-cpp/cmake-build-debug-visual-studio/CMakeFiles/rebuild_cache.dir
