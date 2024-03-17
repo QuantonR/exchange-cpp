@@ -1,2 +1,11 @@
 .vs/
-.main
+
+*.exe
+
+build/
+
+build/CMakeFiles/*.txt
+
+out/
+
+/main
