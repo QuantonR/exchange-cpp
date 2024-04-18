@@ -1,20 +1,33 @@
 cmake_minimum_required(VERSION 3.20)
-set(CMAKE_TOOLCHAIN_FILE "C:/cpp_packages/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 
 project(exchange_cpp)
 
-find_package(CURL CONFIG REQUIRED)
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(GTest CONFIG REQUIRED)
+# Find required packages
+find_package(CURL REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(GTest REQUIRED)
+find_package(Boost 1.84.0 REQUIRED)
+
+# Include Boost headers
+include_directories(${Boost_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 20)
 
+# Define the executable that uses your project files
 add_executable(exchange_cpp
-        main.cpp
-        src/Book.cpp
-        src/Order.cpp
-        src/Limit.cpp
-        Tests/test.cpp
+    src/Book.cpp
+    src/Order.cpp
+    src/Limit.cpp
+    src/Book.h
+    src/Order.h
+    src/Limit.h
+    Tests/test.cpp
 )
 
-target_link_libraries(exchange_cpp PRIVATE CURL::libcurl nlohmann_json::nlohmann_json)
+# Link libraries to your main executable
+target_link_libraries(exchange_cpp PRIVATE
+    CURL::libcurl
+    nlohmann_json::nlohmann_json
+    GTest::GTest
+    ${Boost_LIBRARIES}
+)

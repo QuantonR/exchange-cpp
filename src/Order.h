@@ -52,6 +52,8 @@ public:
     int getEntryTime() const;
 
     int getEventTime() const;
+    
+    int getShares() const;
 };
 
 

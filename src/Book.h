@@ -9,6 +9,7 @@
 #include "Limit.h"
 
 class Book {
+    
     /* Here is an overview of the variables in the Order class:
      * - buyTree: This is the root of a binary search tree. This structure allows for efficient insertion, deletion, and searching of limit orders. This is used to navigate throughout the buy side of the order book.
      * - sellTree: Similar to the buyTree but for the sell limit orders.
@@ -30,7 +31,7 @@ public:
 
     Limit *getLowestSell() const;
 
-    Limit *getHighestBuy() const;-------
+    Limit *getHighestBuy() const;
 
     void setBuyTree(Limit *buyTree);
 
