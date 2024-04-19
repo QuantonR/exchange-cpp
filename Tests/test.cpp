@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
 #include "../src/Book.h"
+#include <gtest/gtest.h>
+#include <gtest/gtest-spi.h>
 #include <chrono>
 
 // Using namespace std::chrono for cleaner code
@@ -21,6 +22,11 @@ protected:
     int getCurrentTimeSeconds() const {
         return static_cast<int>(system_clock::to_time_t(system_clock::now()));
     }
+};
+
+GTEST_API_ int main(int argc, char **argv) {
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 };
 
 TEST_F(OrderBookTest, AddingFirstBuyOrder) {

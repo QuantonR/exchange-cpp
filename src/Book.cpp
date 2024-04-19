@@ -105,6 +105,7 @@ std::string printTree(Limit* tree) {
 }
 
 std::string toString(const Book& book) {
+    
     std::string str = "Buy Tree: ";
     str += printTree(book.getBuyTree());
     str += "\nSell Tree: ";
