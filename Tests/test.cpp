@@ -87,10 +87,11 @@ TEST_F(OrderBookTest, AddingOrderToExistingLimit) {
 }
 
 TEST_F(OrderBookTest, AddingBestBuyAndSellOrders) {
-    orderBook.addLimitOrder(true, 3, getCurrentTimeSeconds(), getCurrentTimeSeconds(), 25); // Initial best buy
-    orderBook.addLimitOrder(false, 3, getCurrentTimeSeconds(), getCurrentTimeSeconds(), 30); // Initial best sell
-    orderBook.addLimitOrder(true, 2, getCurrentTimeSeconds(), getCurrentTimeSeconds(), 26); // Better buy
-    orderBook.addLimitOrder(false, 2, getCurrentTimeSeconds(), getCurrentTimeSeconds(), 29); // Better sell
+    int now_time = getCurrentTimeSeconds();
+    orderBook.addLimitOrder(true, 3, now_time, now_time, 25); // Initial best buy
+    orderBook.addLimitOrder(false, 3, now_time, now_time, 30); // Initial best sell
+    orderBook.addLimitOrder(true, 2, now_time, now_time, 26); // Better buy
+    orderBook.addLimitOrder(false, 2, now_time, now_time, 29); // Better sell
 
     EXPECT_EQ(orderBook.getHighestBuy()->getLimitPrice(), 26);
     EXPECT_EQ(orderBook.getLowestSell()->getLimitPrice(), 29);
