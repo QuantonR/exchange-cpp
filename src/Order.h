@@ -2,8 +2,7 @@
 // Created by Riccardo on 17/02/2024.
 //
 
-#ifndef EXCHANGE_CPP_ORDER_H
-#define EXCHANGE_CPP_ORDER_H
+#pragma once
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>

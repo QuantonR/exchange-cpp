@@ -8,19 +8,17 @@
 Limit::Limit(int limitPrice, int size, Limit *parent) : limitPrice(limitPrice), size(0), totalVolume(0), parent(parent), leftChild(nullptr), rightChild(nullptr),
     headOrder(nullptr), tailOrder(nullptr){};
 
-void Limit::addOrder(bool orderType, int size, int entryTime, int eventType){
-
-    this -> totalVolume += size;
-    this -> size += 1;
-    Order* newOrder = new Order(orderType, size , this -> getLimitPrice(), entryTime, eventType, this);
-    auto nextOrder = this->getTailOrder();
-    if (nextOrder == nullptr) {
-        this->setTailOrder(newOrder);
-        this->setHeadOrder(newOrder);
+void Limit::addOrder(bool orderType, int size, int entryTime, int eventType) {
+    totalVolume += size;
+    this->size += 1;
+    std::unique_ptr<Order> newOrder = std::make_unique<Order>(orderType, size, this->limitPrice, entryTime, eventType, this);
+    if (!tailOrder) {
+        headOrder = std::move(newOrder);
+        tailOrder = headOrder.get();
     } else {
-        newOrder->setPrevOrder(nextOrder);
-        newOrder->setNextOrder(nullptr);
-        this->setTailOrder(newOrder);
+        newOrder->setPrevOrder(tailOrder);
+        tailOrder->setNextOrder(newOrder.get());
+        tailOrder = newOrder.release();
     }
 };
 

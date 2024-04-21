@@ -2,8 +2,7 @@
 // Created by Riccardo on 17/02/2024.
 //
 
-#ifndef EXCHANGE_CPP_LIMIT_H
-#define EXCHANGE_CPP_LIMIT_H
+#pragma once
 
 #include "Order.h"
 class Order;
@@ -22,10 +21,10 @@ class Limit {
     int size;
     int totalVolume;
     Limit *parent;
-    Limit *leftChild;
-    Limit *rightChild;
-    Order *headOrder;
-    Order *tailOrder;
+    std::unique_ptr<Limit> leftChild;
+    std::unique_ptr<Limit> rightChild;
+    std::unique_ptr<Order> headOrder;
+    std::unique_ptr<Order> tailOrder;
 
 public:
 
