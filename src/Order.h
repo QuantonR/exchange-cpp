@@ -54,6 +54,3 @@ public:
     
     int getShares() const;
 };
-
-
-#endif //EXCHANGE_CPP_ORDER_H

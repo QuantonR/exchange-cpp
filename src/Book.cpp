@@ -4,76 +4,70 @@
 
 #include "Book.h"
 
-Book::Book() : buyTree(nullptr),
-               sellTree(nullptr),
-               lowestSell(nullptr),
-               highestBuy(nullptr){};
 
-const void Book::addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice){
+Book::Book() : buyTree(nullptr), sellTree(nullptr), lowestSell(nullptr), highestBuy(nullptr) {}
 
-    std::unique_ptr<Limit> &fatherTree = orderType ? this->getBuyTree() : this->getSellTree();
+void Book::addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice) {
+    std::unique_ptr<Limit>& fatherTree = orderType ? buyTree : sellTree;
     Limit* searchedLimit = addLimitToTree(fatherTree, nullptr, size, limitPrice, orderType);
-    searchedLimit -> addOrder(orderType, size, entryTime, eventType);
+    searchedLimit->addOrder(orderType, size, entryTime, eventType);
     updateAfterAddingLimit(searchedLimit, orderType);
-};
+}
 
-Limit* Book::addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType) {
+Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int size, int limitPrice, bool orderType) {
     if (!tree) {
-        // Reached a leaf, insert the new Limit here
         tree = std::make_unique<Limit>(limitPrice, size, parent);
-        return tree.get()
+        // Update highestBuy or lowestSell immediately after adding the new limit
+        if (orderType && (!highestBuy || limitPrice > highestBuy->getLimitPrice())) {
+            highestBuy = tree.get();
+        } else if (!orderType && (!lowestSell || limitPrice < lowestSell->getLimitPrice())) {
+            lowestSell = tree.get();
+        }
+        return tree.get();
     }
-    // Determine the direction to traverse based on limitPrice and recursively add
+
+    // Recursively add the limit to the tree
     if (limitPrice < tree->getLimitPrice()) {
-        return addLimitToTree(tree->leftChild, tree.get(), size, limitPrice, orderType);
+        if (!tree->getLeftChild()) {
+            tree->setLeftChild(std::make_unique<Limit>(limitPrice, size, tree.get()));
+            return tree->getLeftChild();
+        } else {
+            return addLimitToTree(tree->getLeftUniquePtr(), tree.get(), size, limitPrice, orderType);
+        }
     } else if (limitPrice > tree->getLimitPrice()) {
-        return addLimitToTree(tree->rightChild, tree.get(), size, limitPrice, orderType);
+        if (!tree->getRightChild()) {
+            tree->setRightChild(std::make_unique<Limit>(limitPrice, size, tree.get()));
+            return tree->getRightChild();
+        } else {
+            return addLimitToTree(tree->getRightUniquePtr(), tree.get(), size, limitPrice, orderType);
+        }
     }
+    // If the limit already exists, we simply return it.
     return tree.get();
 }
 
-
 void Book::updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder) {
-    if (isBuyOrder) {
-        if (!highestBuy || newLimit->getLimitPrice() > highestBuy->getLimitPrice()) {
-            setHighestBuy(newLimit);
-        }
-    } else {
-        if (!lowestSell || newLimit->getLimitPrice() < lowestSell->getLimitPrice()) {
-            setLowestSell(newLimit);
-        }
+    if (isBuyOrder && (!highestBuy || newLimit->getLimitPrice() > highestBuy->getLimitPrice())) {
+        highestBuy = newLimit;
+    } else if (!isBuyOrder && (!lowestSell || newLimit->getLimitPrice() < lowestSell->getLimitPrice())) {
+        lowestSell = newLimit;
     }
 }
 
-Limit *Book::getBuyTree() const {
-    return buyTree;
+Limit* Book::getBuyTree() const {
+    return buyTree.get();
 }
 
-Limit *Book::getSellTree() const {
-    return sellTree;
+Limit* Book::getSellTree() const {
+    return sellTree.get();
 }
 
-Limit *Book::getLowestSell() const {
+Limit* Book::getLowestSell() const {
     return lowestSell;
 }
 
-Limit *Book::getHighestBuy() const {
+Limit* Book::getHighestBuy() const {
     return highestBuy;
 }
 
-void Book::setBuyTree(Limit *buyTree) {
-    Book::buyTree = buyTree;
-}
-
-void Book::setSellTree(Limit *sellTree) {
-    Book::sellTree = sellTree;
-}
-
-void Book::setLowestSell(Limit *lowestSell) {
-    Book::lowestSell = lowestSell;
-}
-
-void Book::setHighestBuy(Limit *highestBuy) {
-    Book::highestBuy = highestBuy;
-}
-
+// No setters for buyTree and sellTree since they are managed by unique_ptr

@@ -17,39 +17,22 @@ class Book {
      * - highestBuy: similar to lowestSell but for buy limit orders.
      */
 
-    std::unique_ptr<Limit> buyTree; // used for finding the best buy price
-    std::unique_ptr<Limit> sellTree; // used for finding the lowest sell price
-    Limit *lowestSell; // pointer to the lowest sell price. Used for quickly matching with best buy
-    Limit *highestBuy; // pointer to the best sell
+private:
+    std::unique_ptr<Limit> buyTree;
+    std::unique_ptr<Limit> sellTree;
+    Limit* lowestSell;
+    Limit* highestBuy;
 
 public:
     Book();
 
-    Limit *getBuyTree() const;
-
-    Limit *getSellTree() const;
-
-    Limit *getLowestSell() const;
-
-    Limit *getHighestBuy() const;
-
-    void setBuyTree(Limit *buyTree);
-
-    void setSellTree(Limit *sellTree);
-
-    void setLowestSell(Limit *lowestSell);
-
-    void setHighestBuy(Limit *highestBuy);
-
-    const void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
-
-    Limit* addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType);
-
+    void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
+    Limit* addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int size, int limitPrice, bool orderType);
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
 
-    friend std::string toString(const Book &book);
-
-    friend std::string printTree(Limit* tree);
+    // Accessors
+    Limit* getBuyTree() const;
+    Limit* getSellTree() const;
+    Limit* getLowestSell() const;
+    Limit* getHighestBuy() const;
 };
-
-#endif //EXCHANGE_CPP_BOOK_H
