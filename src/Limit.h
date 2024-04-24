@@ -46,6 +46,7 @@ public:
     // Getters for smart pointer managed members (returns raw pointers for internal manipulation)
     Limit* getLeftChild() const;
     Limit* getRightChild() const;
+    Limit* addLimit(int size, int limitPrice, bool orderType);
     
     std::unique_ptr<Limit>& getRightUniquePtr();
     std::unique_ptr<Limit>& getLeftUniquePtr();

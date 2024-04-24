@@ -29,6 +29,7 @@ public:
     void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
     Limit* addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int size, int limitPrice, bool orderType);
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
+    Limit* findLimit(Limit* root, int limitPrice) const;
 
     // Accessors
     Limit* getBuyTree() const;

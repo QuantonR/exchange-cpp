@@ -5,21 +5,43 @@ Limit::Limit(int limitPrice, int size, Limit* parent)
     : limitPrice(limitPrice), size(size), totalVolume(0), parent(parent),
       leftChild(nullptr), rightChild(nullptr), headOrder(nullptr), tailOrder(nullptr) {}
 
-// Adds an order
-void Limit::addOrder(bool orderType, int size, int entryTime, int eventType) {
-    totalVolume += size;
-    this->size++;
+void Limit::addOrder(bool orderType, int orderShares, int entryTime, int eventType) {
+    // This will create a new Order and add it to the Limit
+    auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, eventType, this);
 
-    // Make a new order and set it at the end of the list
-    auto newOrder = std::make_unique<Order>(orderType, size, limitPrice, entryTime, eventType, this);
-    if (!tailOrder) {
-        headOrder = std::move(newOrder); // New order becomes the head and the tail since it's the first order
+    // Increment totalVolume and size for the Limit
+    totalVolume += orderShares;
+    size += 1;
+
+    if (!headOrder) {
+        // If this is the first order, set head and tail to this order
+        headOrder = std::move(newOrder);
         tailOrder = headOrder.get();
     } else {
-        newOrder->setPrevOrder(tailOrder); // Set the new order's previous order to the current tail
-        tailOrder->setNextOrder(newOrder.get()); // Set current tail's next order to the new order
-        tailOrder = newOrder.release(); // The new order is now the last order, release it from unique_ptr
+        newOrder->setPrevOrder(tailOrder); // Link the new order with the current tail
+        tailOrder->setNextOrder(newOrder.get()); // Link the current tail with the new order
+        tailOrder = newOrder.release(); // tailOrder now points to the new order, release ownership from newOrder
     }
+}
+
+Limit* Limit::addLimit(int size, int limitPrice, bool orderType) {
+    if (limitPrice < this->limitPrice) {
+        if (!leftChild) {
+            leftChild = std::make_unique<Limit>(limitPrice, size, this);
+            return leftChild.get();
+        } else {
+            return leftChild->addLimit(size, limitPrice, orderType);
+        }
+    } else if (limitPrice > this->limitPrice) {
+        if (!rightChild) {
+            rightChild = std::make_unique<Limit>(limitPrice, size, this);
+            return rightChild.get();
+        } else {
+            return rightChild->addLimit(size, limitPrice, orderType);
+        }
+    }
+    // If the limit price is equal, we do not add a new limit; we just return this limit.
+    return this;
 }
 
 // Getter implementations
