@@ -7,6 +7,20 @@
 
 Book::Book() : buyTree(nullptr), sellTree(nullptr), lowestSell(nullptr), highestBuy(nullptr) {}
 
+void Book::addLimitOrder(bool orderType, int orderShares, int entryTime, int eventType, int limitPrice) {
+    // Get the correct tree (buy or sell) based on orderType.
+    std::unique_ptr<Limit>& tree = orderType ? buyTree : sellTree;
+    
+    // Check if the limit already exists, and get or create a new limit as necessary.
+    Limit* limit = findLimit(tree.get(), limitPrice);
+    if (limit == nullptr) {
+        limit = addLimitToTree(tree, nullptr, orderShares, limitPrice, orderType);
+    }
+    // Add the order to the found or new limit.
+    limit->addOrder(orderType, orderShares, entryTime, eventType);
+    updateAfterAddingLimit(limit, orderType);
+}
+
 Limit* Book::findLimit(Limit* root, int limitPrice) const {
     Limit* current = root;
     while (current != nullptr) {
@@ -25,24 +39,9 @@ Limit* Book::findLimit(Limit* root, int limitPrice) const {
     return nullptr;
 }
 
-void Book::addLimitOrder(bool orderType, int orderShares, int entryTime, int eventType, int limitPrice) {
-    // Get the correct tree (buy or sell) based on orderType.
-    std::unique_ptr<Limit>& tree = orderType ? buyTree : sellTree;
-    
-    // Check if the limit already exists, and get or create a new limit as necessary.
-    Limit* limit;
-    if (!(limit = findLimit(tree.get(), limitPrice))) {
-        limit = addLimitToTree(tree, nullptr, orderShares, limitPrice, orderType);
-    }
-    
-    // Add the order to the found or new limit.
-    limit->addOrder(orderType, orderShares, entryTime, eventType);
-    updateAfterAddingLimit(limit, orderType);
-}
-
-Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int size, int limitPrice, bool orderType) {
+Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int volume, int limitPrice, bool orderType) {
     if (!tree) {
-        tree = std::make_unique<Limit>(limitPrice, size, parent);
+        tree = std::make_unique<Limit>(limitPrice, parent);
         // Update highestBuy or lowestSell immediately after adding the new limit
         if (orderType) {
             highestBuy = (highestBuy && highestBuy->getLimitPrice() > limitPrice) ? highestBuy : tree.get();
@@ -52,7 +51,7 @@ Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int siz
         return tree.get();
     } else {
         // This should call a public method on Limit that handles recursion.
-        return tree->addLimit(size, limitPrice, orderType);
+        return tree->addLimit(volume, limitPrice, orderType);
     }
 }
 

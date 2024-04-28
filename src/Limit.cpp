@@ -1,11 +1,12 @@
 #include "Limit.h"
 
 // Constructor
-Limit::Limit(int limitPrice, int size, Limit* parent)
-    : limitPrice(limitPrice), size(size), totalVolume(0), parent(parent),
+Limit::Limit(int limitPrice, Limit* parent)
+    : limitPrice(limitPrice), size(0), totalVolume(0), parent(parent),
       leftChild(nullptr), rightChild(nullptr), headOrder(nullptr), tailOrder(nullptr) {}
 
 void Limit::addOrder(bool orderType, int orderShares, int entryTime, int eventType) {
+    
     // This will create a new Order and add it to the Limit
     auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, eventType, this);
 
@@ -27,14 +28,14 @@ void Limit::addOrder(bool orderType, int orderShares, int entryTime, int eventTy
 Limit* Limit::addLimit(int size, int limitPrice, bool orderType) {
     if (limitPrice < this->limitPrice) {
         if (!leftChild) {
-            leftChild = std::make_unique<Limit>(limitPrice, size, this);
+            leftChild = std::make_unique<Limit>(limitPrice, this);
             return leftChild.get();
         } else {
             return leftChild->addLimit(size, limitPrice, orderType);
         }
     } else if (limitPrice > this->limitPrice) {
         if (!rightChild) {
-            rightChild = std::make_unique<Limit>(limitPrice, size, this);
+            rightChild = std::make_unique<Limit>(limitPrice, this);
             return rightChild.get();
         } else {
             return rightChild->addLimit(size, limitPrice, orderType);

@@ -30,19 +30,19 @@ GTEST_API_ int main(int argc, char **argv) {
 TEST_F(OrderBookTest, AddingFirstBuyOrder) {
     int nowSeconds = getCurrentTimeSeconds();
     int orderPrice = 25;
-    int insertedSize = 3;
+    int volume = 3;
 
-    orderBook->addLimitOrder(true, insertedSize, nowSeconds, nowSeconds, orderPrice);
+    orderBook->addLimitOrder(true, volume, nowSeconds, nowSeconds, orderPrice);
 
     Limit* highestBuy = orderBook->getHighestBuy();
     ASSERT_NE(highestBuy, nullptr);
     EXPECT_EQ(highestBuy->getLimitPrice(), orderPrice);
     EXPECT_EQ(highestBuy->getSize(), 1);
-    EXPECT_EQ(highestBuy->getTotalVolume(), insertedSize);
+    EXPECT_EQ(highestBuy->getTotalVolume(), volume);
 
     Order* headOrder = highestBuy->getHeadOrder();
     ASSERT_EQ(headOrder, highestBuy->getTailOrder());
-    EXPECT_EQ(headOrder->getShares(), insertedSize);
+    EXPECT_EQ(headOrder->getShares(), volume);
     EXPECT_EQ(headOrder->getEntryTime(), nowSeconds);
 }
 

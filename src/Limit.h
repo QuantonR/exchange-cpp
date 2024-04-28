@@ -29,7 +29,7 @@ private:
     Order* tailOrder; // Raw pointer for traversal without ownership
 
 public:
-    Limit(int limitPrice, int size, Limit* parent); // Constructor
+    Limit(int limitPrice, Limit* parent); // Constructor
 
     void addOrder(bool orderType, int size, int entryTime, int eventType); // Adds an order to this limit
     int getLimitPrice() const; // Getter for limit price
