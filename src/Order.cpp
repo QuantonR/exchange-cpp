@@ -10,7 +10,15 @@ Order::Order() : idNumber("0"), orderType(true), shares(0), limit(0), entryTime(
 
 Order::Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit) :
                 idNumber(Order::generateUuid()), orderType(orderType), shares(shares), limit(limit),
-                entryTime(entryTime), eventTime(eventTime), nextOrder(nullptr), prevOrder(nullptr), parentLimit(parentLimit){}
+                entryTime(entryTime), eventTime(eventTime), nextOrder(nullptr), prevOrder(nullptr), parentLimit(parentLimit){
+                    
+                    if (limit <= 0){
+                        throw std::invalid_argument("The price must be positive");
+                    }
+                    if (shares <= 0){
+                        throw std::invalid_argument("The order size must be positive");
+                    }
+                }
 
 const std::string Order::generateUuid() {
     boost::uuids::random_generator generator;

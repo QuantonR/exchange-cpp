@@ -93,3 +93,51 @@ TEST_F(OrderBookTest, AddingBestBuyAndSellOrders) {
     EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 26);
     EXPECT_EQ(orderBook->getLowestSell()->getLimitPrice(), 29);
 }
+
+TEST_F(OrderBookTest, Adding3WorstBuyLimits){
+    int now_time = getCurrentTimeSeconds();
+    orderBook -> addLimitOrder(true, 10, now_time, now_time, 10); // Best buy
+    orderBook -> addLimitOrder(true, 2, now_time, now_time, 9); // Worst buy
+    orderBook -> addLimitOrder(true, 5, now_time, now_time, 9); // Another worst buy
+
+    auto buyTree = orderBook -> getBuyTree();
+    EXPECT_EQ(buyTree->getLeftChild()->getLimitPrice(), 9);
+    EXPECT_EQ(buyTree->getLeftChild()->getSize(), 2);
+    EXPECT_EQ(buyTree->getLeftChild()->getTotalVolume(), 7);
+    
+    orderBook -> addLimitOrder(true, 10, now_time, now_time, 9); // Another worst buy
+
+    EXPECT_EQ(buyTree->getLeftChild()->getSize(), 3);
+    EXPECT_EQ(buyTree->getLeftChild()->getTotalVolume(), 17);
+}
+
+TEST_F(OrderBookTest, Adding3WorstSellLimits){
+    int now_time = getCurrentTimeSeconds();
+    orderBook -> addLimitOrder(false, 30, now_time, now_time, 30); // Best sell
+    orderBook -> addLimitOrder(false, 40, now_time, now_time, 31); // Worst sell
+    orderBook -> addLimitOrder(false, 45, now_time, now_time, 31); // Another worst sell
+
+    auto sellTree = orderBook -> getSellTree();
+    EXPECT_EQ(sellTree->getRightChild()->getLimitPrice(), 31);
+    EXPECT_EQ(sellTree->getRightChild()->getSize(), 2);
+    EXPECT_EQ(sellTree->getRightChild()->getTotalVolume(), 85);
+    
+    orderBook -> addLimitOrder(false, 15, now_time, now_time, 31); // Another worst sell
+
+    EXPECT_EQ(sellTree->getRightChild()->getSize(), 3);
+    EXPECT_EQ(sellTree->getRightChild()->getTotalVolume(), 100);
+}
+
+TEST_F(OrderBookTest, NegativeSizeTest) {
+    int nowTime = getCurrentTimeSeconds();
+    EXPECT_THROW({
+        orderBook->addLimitOrder(true, -30, nowTime, nowTime, 30); // Negative volume
+    }, std::invalid_argument);
+}
+
+TEST_F(OrderBookTest, NegativeLimitPrice) {
+    int nowTime = getCurrentTimeSeconds();
+    EXPECT_THROW({
+        orderBook->addLimitOrder(true, 3, nowTime, nowTime, -1); // Negative price
+    }, std::invalid_argument);
+}
