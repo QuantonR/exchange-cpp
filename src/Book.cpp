@@ -7,7 +7,8 @@
 
 Book::Book() : buyTree(nullptr), sellTree(nullptr), lowestSell(nullptr), highestBuy(nullptr) {}
 
-void Book::addLimitOrder(bool orderType, int orderShares, int entryTime, int eventType, int limitPrice) {
+void Book::addLimitOrder(bool orderType, int orderShares, int entryTime, int eventType, float floatLimitPrice) {
+    int limitPrice = static_cast<int>(std::round(floatLimitPrice * 100)); // I decided to use int prices so, given 1.24 it will get converted to 124
     // Get the correct tree (buy or sell) based on orderType.
     std::unique_ptr<Limit>& tree = orderType ? buyTree : sellTree;
     

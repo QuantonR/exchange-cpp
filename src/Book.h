@@ -1,10 +1,12 @@
 //
 // Created by Riccardo on 17/02/2024.
 //
+
 #pragma once
 
 #include <ostream>
 #include <memory>
+#include <math.h>
 #include "Limit.h"
 
 
@@ -26,12 +28,11 @@ private:
 public:
     Book();
 
-    void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
+    void addLimitOrder(bool orderType, int size, int entryTime, int eventType, float floatLimitPrice);
     Limit* addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent,  int volume, int limitPrice, bool orderType);
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
     Limit* findLimit(Limit* root, int limitPrice) const;
 
-    // Accessors
     Limit* getBuyTree() const;
     Limit* getSellTree() const;
     Limit* getLowestSell() const;
