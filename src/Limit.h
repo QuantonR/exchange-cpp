@@ -31,7 +31,7 @@ private:
 public:
     Limit(int limitPrice, Limit* parent); // Constructor
 
-    void addOrder(bool orderType, int size, int entryTime, int eventType); // Adds an order to this limit
+    void addOrder(bool orderType, int size, int entryTime, int eventTime); // Adds an order to this limit
     int getLimitPrice() const; // Getter for limit price
     int getSize() const; // Getter for size
     int getTotalVolume() const; // Getter for total volume

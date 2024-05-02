@@ -41,7 +41,7 @@ public:
 
     int getLimit() const;
 
-    int getOrderType() const;
+    bool getOrderType() const;
 
     Order* getNextOrder() const;
 

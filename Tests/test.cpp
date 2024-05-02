@@ -143,3 +143,55 @@ TEST_F(OrderBookTest, NegativeLimitPrice) {
         orderBook->addLimitOrder(true, 3.15, nowTime, nowTime, -1); // Negative price
     }, std::invalid_argument);
 }
+
+TEST_F(OrderBookTest, correctValueInOrder) {
+    int nowTime = getCurrentTimeSeconds();
+    orderBook -> addLimitOrder(false, 30, nowTime, nowTime, 30.15);
+    
+    auto sellTree = orderBook -> getSellTree();
+    auto order = sellTree->getHeadOrder();
+    
+    EXPECT_EQ(3015, order->getLimit());
+    EXPECT_EQ(nowTime, order->getEntryTime());
+    EXPECT_EQ(nowTime, order->getEventTime());
+    EXPECT_EQ(30, order->getShares());
+    EXPECT_EQ(false, order->getOrderType());
+    
+    int secondNowTime = getCurrentTimeSeconds();
+    orderBook->addLimitOrder(false, 5, secondNowTime, secondNowTime, 30.15);
+    sellTree = orderBook->getSellTree();
+    order = sellTree->getHeadOrder();
+    auto nextOrder = order->getNextOrder();
+    
+    EXPECT_EQ(3015, nextOrder->getLimit());
+    EXPECT_EQ(false, nextOrder->getOrderType());
+    EXPECT_EQ(5, nextOrder->getShares());
+    EXPECT_EQ(secondNowTime, nextOrder->getEntryTime());
+    EXPECT_EQ(secondNowTime, nextOrder->getEventTime());
+}
+
+TEST_F(OrderBookTest, LimitAddOrderTest){
+    int nowTime = getCurrentTimeSeconds();
+    orderBook -> addLimitOrder(true, 30, nowTime, nowTime, 17.98);
+    Limit* buyTree = orderBook->getBuyTree();
+    
+    int secondEntryTime = getCurrentTimeSeconds();
+    buyTree->addOrder(true, 7, secondEntryTime, secondEntryTime);
+    
+    Order* addedOrder = buyTree->getHeadOrder()->getNextOrder();
+    
+    EXPECT_EQ(1798, addedOrder->getLimit());
+    EXPECT_EQ(true, addedOrder->getOrderType());
+    EXPECT_EQ(7, addedOrder->getShares());
+    EXPECT_EQ(secondEntryTime, addedOrder->getEntryTime());
+    EXPECT_EQ(secondEntryTime, addedOrder->getEventTime());
+}
+
+TEST_F(OrderBookTest, LimitAddLimitTest){
+    int nowTime = getCurrentTimeSeconds();
+    orderBook -> addLimitOrder(true, 5, nowTime, nowTime, 34.12);
+    Limit* buyTree = orderBook->getBuyTree();
+    
+    buyTree->addLimit(15, 3410, true);
+    Limit* newLimit = buyTree->getLeftChild();
+}

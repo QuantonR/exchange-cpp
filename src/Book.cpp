@@ -51,7 +51,6 @@ Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int vol
         }
         return tree.get();
     } else {
-        // This should call a public method on Limit that handles recursion.
         return tree->addLimit(volume, limitPrice, orderType);
     }
 }

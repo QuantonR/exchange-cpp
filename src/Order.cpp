@@ -39,7 +39,7 @@ int Order::getLimit() const {
     return limit;
 };
 
-int Order::getOrderType() const {
+bool Order::getOrderType() const {
 
     return orderType;
 };
