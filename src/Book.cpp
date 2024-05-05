@@ -4,119 +4,82 @@
 
 #include "Book.h"
 
-Book::Book() : buyTree(nullptr),
-               sellTree(nullptr),
-               lowestSell(nullptr),
-               highestBuy(nullptr){};
 
-const void Book::addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice){
+Book::Book() : buyTree(nullptr), sellTree(nullptr), lowestSell(nullptr), highestBuy(nullptr) {}
 
-    Limit* fatherTree = orderType ? this->getBuyTree() : this->getSellTree();
-    Limit* searchedLimit = addLimitToTree(fatherTree, nullptr, size, limitPrice, orderType);
-    searchedLimit -> addOrder(orderType, size, entryTime, eventType);
-    updateAfterAddingLimit(searchedLimit, orderType);
-};
+void Book::addOrderToBook(bool orderType, int orderVolume, float floatLimitPrice) {
+    int limitPrice = static_cast<int>(std::round(floatLimitPrice * 100)); // I decided to use int prices so, given 1.24 it will get converted to 124
+    // Get the correct tree (buy or sell) based on orderType.
+    std::unique_ptr<Limit>& tree = orderType ? buyTree : sellTree;
+    
+    // Check if the limit already exists, and get or create a new limit as necessary.
+    Limit* limit = findLimit(tree.get(), limitPrice);
+    if (limit == nullptr) {
+        limit = addLimitToTree(tree, nullptr, orderVolume, limitPrice, orderType);
+    }
+    // Add the order to the found or new limit.
+    int entryTime = getCurrentTimeSeconds();
+    limit->addOrderToLimit(orderType, orderVolume, entryTime);
+    updateAfterAddingLimit(limit, orderType);
+}
 
-Limit* Book::addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType) {
-    if (tree == nullptr) {
-        // Reached a leaf, insert the new Limit here
-        tree = new Limit(limitPrice, size, parent); // Ensure the Limit constructor is correctly defined
-
-        // If this is the root of the tree, update the buy or sell tree root
-        if (parent == nullptr) {
-            if (orderType) {
-                setBuyTree(tree);
-                setHighestBuy(tree);
-            } else {
-                setSellTree(tree);
-                setLowestSell(tree);
-            }
+Limit* Book::findLimit(Limit* root, int limitPrice) const {
+    Limit* current = root;
+    while (current != nullptr) {
+        if (current->getLimitPrice() == limitPrice) {
+            // Found the limit with the specified price
+            return current;
+        } else if (limitPrice < current->getLimitPrice()) {
+            // If the search price is less, go left
+            current = current->getLeftChild();
+        } else {
+            // If the search price is greater, go right
+            current = current->getRightChild();
         }
-        return tree;
     }
+    // If we reach here, no limit with the specified price exists in the tree
+    return nullptr;
+}
 
-    // Determine the direction to traverse based on limitPrice and recursively add the limit
-    if (limitPrice < tree->getLimitPrice()) {
-        // Recursively add to the left, updating tree's left child if it's nullptr
-        tree->setLeftChild(addLimitToTree(tree->getLeftChild(), tree, size, limitPrice, orderType));
-    } else if (limitPrice > tree->getLimitPrice()) {
-        // Recursively add to the right, updating tree's right child if it's nullptr
-        tree->setRightChild(addLimitToTree(tree->getRightChild(), tree, size, limitPrice, orderType));
+Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int volume, int limitPrice, bool orderType) {
+    if (!tree) {
+        tree = std::make_unique<Limit>(limitPrice, parent);
+        // Update highestBuy or lowestSell immediately after adding the new limit
+        if (orderType) {
+            highestBuy = (highestBuy && highestBuy->getLimitPrice() > limitPrice) ? highestBuy : tree.get();
+        } else {
+            lowestSell = (lowestSell && lowestSell->getLimitPrice() < limitPrice) ? lowestSell : tree.get();
+        }
+        return tree.get();
+    } else {
+        return tree->addLimit(volume, limitPrice, orderType);
     }
-
-    // If a limit with the exact price exists, just return the existing node
-    return tree;
 }
 
 void Book::updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder) {
-    if (isBuyOrder) {
-        if (!highestBuy || newLimit->getLimitPrice() > highestBuy->getLimitPrice()) {
-            setHighestBuy(newLimit);
-        }
-    } else {
-        if (!lowestSell || newLimit->getLimitPrice() < lowestSell->getLimitPrice()) {
-            setLowestSell(newLimit);
-        }
+    if (isBuyOrder && (!highestBuy || newLimit->getLimitPrice() > highestBuy->getLimitPrice())) {
+        highestBuy = newLimit;
+    } else if (!isBuyOrder && (!lowestSell || newLimit->getLimitPrice() < lowestSell->getLimitPrice())) {
+        lowestSell = newLimit;
     }
 }
 
-Limit *Book::getBuyTree() const {
-    return buyTree;
+int Book::getCurrentTimeSeconds() const {
+    return static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 }
 
-Limit *Book::getSellTree() const {
-    return sellTree;
+Limit* Book::getBuyTree() const {
+    return buyTree.get();
 }
 
-Limit *Book::getLowestSell() const {
+Limit* Book::getSellTree() const {
+    return sellTree.get();
+}
+
+Limit* Book::getLowestSell() const {
     return lowestSell;
 }
 
-Limit *Book::getHighestBuy() const {
+Limit* Book::getHighestBuy() const {
     return highestBuy;
-}
-
-void Book::setBuyTree(Limit *buyTree) {
-    Book::buyTree = buyTree;
-}
-
-void Book::setSellTree(Limit *sellTree) {
-    Book::sellTree = sellTree;
-}
-
-void Book::setLowestSell(Limit *lowestSell) {
-    Book::lowestSell = lowestSell;
-}
-
-void Book::setHighestBuy(Limit *highestBuy) {
-    Book::highestBuy = highestBuy;
-}
-
-std::string printTree(Limit* tree) {
-    if (!tree) {
-        return "";
-    }
-
-    std::string left = printTree(tree->getLeftChild());
-    std::string right = printTree(tree->getRightChild());
-    std::string node = std::to_string(tree->getLimitPrice()) + " ";
-
-    return left + node + right; // In-order traversal concatenation
-}
-
-std::string toString(const Book& book) {
-    std::string str = "Buy Tree: ";
-    str += printTree(book.getBuyTree());
-    str += "\nSell Tree: ";
-    str += printTree(book.getSellTree());
-
-    Limit* lowestSell = book.getLowestSell();
-    str += "\nLowest Sell: ";
-    str += lowestSell ? std::to_string(lowestSell->getLimitPrice()) : "None";
-
-    Limit* highestBuy = book.getHighestBuy();
-    str += "\nHighest Buy: ";
-    str += highestBuy ? std::to_string(highestBuy->getLimitPrice()) : "None";
-
-    return str;
 }

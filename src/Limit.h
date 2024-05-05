@@ -2,11 +2,12 @@
 // Created by Riccardo on 17/02/2024.
 //
 
-#ifndef EXCHANGE_CPP_LIMIT_H
-#define EXCHANGE_CPP_LIMIT_H
+#pragma once
 
 #include "Order.h"
+
 class Order;
+
 class Limit {
 
     /* Here is an overview of the variables in the limit class:
@@ -17,50 +18,36 @@ class Limit {
      *  -headOrder, tailOrder: these two pointers serves as entry points to the doubly linked list of order. This structure allows for FIFO order execution. It is used for adding new orders to the end of the list and for
      *  executing or removing orders from the front.
      */
-
+private:
     int limitPrice;
     int size;
     int totalVolume;
-    Limit *parent;
-    Limit *leftChild;
-    Limit *rightChild;
-    Order *headOrder;
-    Order *tailOrder;
+    Limit* parent; // Raw pointer as ownership is managed by the book
+    std::unique_ptr<Limit> leftChild;
+    std::unique_ptr<Limit> rightChild;
+    std::unique_ptr<Order> headOrder; // Unique_ptr for automatic memory management
+    Order* tailOrder; // Raw pointer for traversal without ownership
 
 public:
+    Limit(int limitPrice, Limit* parent); // Constructor
 
-    int getLimitPrice() const;
+    void addOrderToLimit(bool orderType, int size, int entryTime); // Adds an order to this limit
+    int getLimitPrice() const; // Getter for limit price
+    int getSize() const; // Getter for size
+    int getTotalVolume() const; // Getter for total volume
 
-    void setHeadOrder(Order *headOrder);
+    Order* getHeadOrder() const; // Getter for headOrder
+    Order* getTailOrder() const; // Getter for tailOrder
 
-    void setTailOrder(Order *tailOrder);
+    // Setters for smart pointer managed members
+    void setLeftChild(std::unique_ptr<Limit> left);
+    void setRightChild(std::unique_ptr<Limit> right);
 
-    int getSize() const;
-
-    int getTotalVolume() const;
-
-    Order *getHeadOrder() const;
-
-    Order *getTailOrder() const;
-
-    Limit *getLeftChild() const;
-
-    Limit *getRightChild() const;
-
-    void setParent(Limit *parent);
-
-    void setLeftChild(Limit *leftChild);
-
-    void setRightChild(Limit *rightChild);
-
-    void setLimitPrice(int limitPrice);
-
-    Limit(int limitPrice, int size, Limit *parent);
-
-    void addOrder(bool orderType, int size, int entryTime, int eventType);
-
-    void addLimit(Limit *parent, bool orderType, int size, int entryTime, int eventType, int limitPrice);
+    // Getters for smart pointer managed members (returns raw pointers for internal manipulation)
+    Limit* getLeftChild() const;
+    Limit* getRightChild() const;
+    Limit* addLimit(int size, int limitPrice, bool orderType);
+    
+    std::unique_ptr<Limit>& getRightUniquePtr();
+    std::unique_ptr<Limit>& getLeftUniquePtr();
 };
-
-
-#endif //EXCHANGE_CPP_LIMIT_H

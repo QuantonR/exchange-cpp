@@ -2,12 +2,12 @@
 // Created by Riccardo on 17/02/2024.
 //
 
-#ifndef EXCHANGE_CPP_ORDER_H
-#define EXCHANGE_CPP_ORDER_H
+#pragma once
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <stdexcept>
 #include "Limit.h"
 
 class Limit;
@@ -29,7 +29,7 @@ class Order {
 
 public:
 
-    Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit);
+    Order(bool orderType, int shares, int limit, int entryTime, Limit *parentLimit);
 
     Order();
 
@@ -41,7 +41,7 @@ public:
 
     int getLimit() const;
 
-    int getOrderType() const;
+    bool getOrderType() const;
 
     Order* getNextOrder() const;
 
@@ -52,7 +52,6 @@ public:
     int getEntryTime() const;
 
     int getEventTime() const;
+    
+    int getShares() const;
 };
-
-
-#endif //EXCHANGE_CPP_ORDER_H

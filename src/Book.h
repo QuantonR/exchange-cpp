@@ -2,13 +2,17 @@
 // Created by Riccardo on 17/02/2024.
 //
 
-#ifndef EXCHANGE_CPP_BOOK_H
-#define EXCHANGE_CPP_BOOK_H
+#pragma once
 
 #include <ostream>
+#include <memory>
+#include <math.h>
+#include <chrono>
 #include "Limit.h"
 
+
 class Book {
+    
     /* Here is an overview of the variables in the Order class:
      * - buyTree: This is the root of a binary search tree. This structure allows for efficient insertion, deletion, and searching of limit orders. This is used to navigate throughout the buy side of the order book.
      * - sellTree: Similar to the buyTree but for the sell limit orders.
@@ -16,39 +20,24 @@ class Book {
      * - highestBuy: similar to lowestSell but for buy limit orders.
      */
 
-    Limit *buyTree; // used for finding the best buy price
-    Limit *sellTree; // used for finding the lowest sell price
-    Limit *lowestSell; // pointer to the lowest sell price. Used for quickly matching with best buy
-    Limit *highestBuy; // pointer to the best sell
+private:
+    std::unique_ptr<Limit> buyTree;
+    std::unique_ptr<Limit> sellTree;
+    Limit* lowestSell;
+    Limit* highestBuy;
 
 public:
     Book();
 
-    Limit *getBuyTree() const;
-
-    Limit *getSellTree() const;
-
-    Limit *getLowestSell() const;
-
-    Limit *getHighestBuy() const;-------
-
-    void setBuyTree(Limit *buyTree);
-
-    void setSellTree(Limit *sellTree);
-
-    void setLowestSell(Limit *lowestSell);
-
-    void setHighestBuy(Limit *highestBuy);
-
-    const void addLimitOrder(bool orderType, int size, int entryTime, int eventType, int limitPrice);
-
-    Limit* addLimitToTree(Limit* tree, Limit* parent, int size, int limitPrice, bool orderType);
-
+    void addOrderToBook(bool orderType, int size, float floatLimitPrice);
+    Limit* addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent,  int volume, int limitPrice, bool orderType);
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
+    Limit* findLimit(Limit* root, int limitPrice) const;
+    
+    int getCurrentTimeSeconds() const;
 
-    friend std::string toString(const Book &book);
-
-    friend std::string printTree(Limit* tree);
+    Limit* getBuyTree() const;
+    Limit* getSellTree() const;
+    Limit* getLowestSell() const;
+    Limit* getHighestBuy() const;
 };
-
-#endif //EXCHANGE_CPP_BOOK_H

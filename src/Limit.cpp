@@ -1,41 +1,51 @@
-//
-// Created by Riccardo on 17/02/2024.
-//
-
 #include "Limit.h"
 
+// Constructor
+Limit::Limit(int limitPrice, Limit* parent)
+    : limitPrice(limitPrice), size(0), totalVolume(0), parent(parent),
+      leftChild(nullptr), rightChild(nullptr), headOrder(nullptr), tailOrder(nullptr) {}
 
-Limit::Limit(int limitPrice, int size, Limit *parent) : limitPrice(limitPrice), size(1), totalVolume(size), parent(parent), leftChild(nullptr), rightChild(nullptr),
-    headOrder(nullptr), tailOrder(nullptr){};
+void Limit::addOrderToLimit(bool orderType, int orderShares, int entryTime) {
+    
+    // This will create a new Order and add it to the Limit
+    auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, this);
 
-void Limit::addOrder(bool orderType, int size, int entryTime, int eventType){
+    // Increment totalVolume and size for the Limit
+    totalVolume += orderShares;
+    size += 1;
 
-    this -> totalVolume += size;
-    this -> size += 1;
-    Order* newOrder = new Order(orderType, size , this -> getLimitPrice(), entryTime, eventType, this);
-    auto nextOrder = this->getTailOrder();
-    if (nextOrder == nullptr) {
-        this->setTailOrder(newOrder);
-        this->setHeadOrder(newOrder);
+    if (!headOrder) {
+        // If this is the first order, set head and tail to this order
+        headOrder = std::move(newOrder);
+        tailOrder = headOrder.get();
     } else {
-        newOrder->setPrevOrder(nextOrder);
-        newOrder->setNextOrder(nullptr);
-        this->setTailOrder(newOrder);
+        newOrder->setPrevOrder(tailOrder); // Link the new order with the current tail
+        tailOrder->setNextOrder(newOrder.get()); // Link the current tail with the new order
+        tailOrder = newOrder.release(); // tailOrder now points to the new order, release ownership from newOrder
     }
-};
-
-void Limit::addLimit(Limit *parent, bool orderType, int size, int entryTime, int eventType, int limitPrice){
-
-    setLimitPrice(limitPrice);
-    setParent(parent);
-    if (getLimitPrice() > parent->getLimitPrice()) {
-        parent->setRightChild(this);
-    } else {
-        parent->setLeftChild(this);
-    }
-    addOrder(orderType, size, entryTime, eventType);
 }
 
+Limit* Limit::addLimit(int size, int limitPrice, bool orderType) {
+    if (limitPrice < this->limitPrice) {
+        if (!leftChild) {
+            leftChild = std::make_unique<Limit>(limitPrice, this);
+            return leftChild.get();
+        } else {
+            return leftChild->addLimit(size, limitPrice, orderType);
+        }
+    } else if (limitPrice > this->limitPrice) {
+        if (!rightChild) {
+            rightChild = std::make_unique<Limit>(limitPrice, this);
+            return rightChild.get();
+        } else {
+            return rightChild->addLimit(size, limitPrice, orderType);
+        }
+    }
+    // If the limit price is equal, we do not add a new limit; we just return this limit.
+    return this;
+}
+
+// Getter implementations
 int Limit::getLimitPrice() const {
     return limitPrice;
 }
@@ -48,42 +58,34 @@ int Limit::getTotalVolume() const {
     return totalVolume;
 }
 
-Order *Limit::getHeadOrder() const {
-    return headOrder;
+Order* Limit::getHeadOrder() const {
+    return headOrder.get();
 }
 
-Order *Limit::getTailOrder() const {
+Order* Limit::getTailOrder() const {
     return tailOrder;
 }
 
-void Limit::setHeadOrder(Order *headOrder) {
-    Limit::headOrder = headOrder;
+void Limit::setLeftChild(std::unique_ptr<Limit> left) {
+    leftChild = std::move(left);
 }
 
-void Limit::setTailOrder(Order *tailOrder) {
-    Limit::tailOrder = tailOrder;
+void Limit::setRightChild(std::unique_ptr<Limit> right) {
+    rightChild = std::move(right);
 }
 
-void Limit::setLimitPrice(int limitPrice) {
-    Limit::limitPrice = limitPrice;
+Limit* Limit::getLeftChild() const {
+    return leftChild.get();
 }
 
-void Limit::setParent(Limit *parent) {
-    Limit::parent = parent;
+Limit* Limit::getRightChild() const {
+    return rightChild.get();
 }
 
-void Limit::setLeftChild(Limit *leftChild) {
-    Limit::leftChild = leftChild;
-}
-
-void Limit::setRightChild(Limit *rightChild) {
-    Limit::rightChild = rightChild;
-}
-
-Limit *Limit::getLeftChild() const {
+std::unique_ptr<Limit>& Limit::getLeftUniquePtr() {
     return leftChild;
 }
 
-Limit *Limit::getRightChild() const {
+std::unique_ptr<Limit>& Limit::getRightUniquePtr() {
     return rightChild;
 }
