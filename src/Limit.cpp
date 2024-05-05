@@ -5,10 +5,10 @@ Limit::Limit(int limitPrice, Limit* parent)
     : limitPrice(limitPrice), size(0), totalVolume(0), parent(parent),
       leftChild(nullptr), rightChild(nullptr), headOrder(nullptr), tailOrder(nullptr) {}
 
-void Limit::addOrder(bool orderType, int orderShares, int entryTime, int eventTime) {
+void Limit::addOrderToLimit(bool orderType, int orderShares, int entryTime) {
     
     // This will create a new Order and add it to the Limit
-    auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, eventTime, this);
+    auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, this);
 
     // Increment totalVolume and size for the Limit
     totalVolume += orderShares;

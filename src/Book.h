@@ -7,6 +7,7 @@
 #include <ostream>
 #include <memory>
 #include <math.h>
+#include <chrono>
 #include "Limit.h"
 
 
@@ -28,10 +29,12 @@ private:
 public:
     Book();
 
-    void addLimitOrder(bool orderType, int size, int entryTime, int eventType, float floatLimitPrice);
+    void addOrderToBook(bool orderType, int size, float floatLimitPrice);
     Limit* addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent,  int volume, int limitPrice, bool orderType);
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
     Limit* findLimit(Limit* root, int limitPrice) const;
+    
+    int getCurrentTimeSeconds() const;
 
     Limit* getBuyTree() const;
     Limit* getSellTree() const;

@@ -8,9 +8,9 @@ Order::Order() : idNumber("0"), orderType(true), shares(0), limit(0), entryTime(
                  eventTime(0), nextOrder(nullptr), prevOrder(nullptr),
                  parentLimit(nullptr) {}
 
-Order::Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit) :
+Order::Order(bool orderType, int shares, int limit, int entryTime, Limit *parentLimit) :
                 idNumber(Order::generateUuid()), orderType(orderType), shares(shares), limit(limit),
-                entryTime(entryTime), eventTime(eventTime), nextOrder(nullptr), prevOrder(nullptr), parentLimit(parentLimit){
+                entryTime(entryTime), eventTime(entryTime), nextOrder(nullptr), prevOrder(nullptr), parentLimit(parentLimit){
                     
                     if (limit <= 0){
                         throw std::invalid_argument("The price must be positive");

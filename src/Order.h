@@ -29,7 +29,7 @@ class Order {
 
 public:
 
-    Order(bool orderType, int shares, int limit, int entryTime, int eventTime, Limit *parentLimit);
+    Order(bool orderType, int shares, int limit, int entryTime, Limit *parentLimit);
 
     Order();
 
