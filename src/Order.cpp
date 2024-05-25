@@ -1,7 +1,3 @@
-//
-// Created by Riccardo on 17/02/2024.
-//
-
 #include "Order.h"
 
 Order::Order() : idNumber("0"), orderType(true), shares(0), limit(0), entryTime(0),
@@ -34,6 +30,9 @@ void Order::setPrevOrder(Order *prevOrder) {
     Order::prevOrder = prevOrder;
 };
 
+void Order::setShares(const int shares){
+    Order::shares = shares;
+}
 
 int Order::getLimit() const {
     return limit;

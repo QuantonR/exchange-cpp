@@ -1,7 +1,3 @@
-//
-// Created by Riccardo on 17/02/2024.
-//
-
 #pragma once
 
 #include <ostream>
@@ -25,16 +21,30 @@ private:
     std::unique_ptr<Limit> sellTree;
     Limit* lowestSell;
     Limit* highestBuy;
-
-public:
-    Book();
-
-    void addOrderToBook(bool orderType, int size, float floatLimitPrice);
+    
+    // these two integer are used for market order. If the volume requested for a market order is greater than the corrisponding tree sie then we throw an error
+    int buyTreeSize;
+    int sellTreeSize;
+    
+    // functions for adding orders
     Limit* addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent,  int volume, int limitPrice, bool orderType);
     void updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder);
     Limit* findLimit(Limit* root, int limitPrice) const;
     
+    
+    // functions for executing orders
+    void executeOrder(int& remainingVolume, Limit*& limitToExecute, const bool& orderType);
+    Limit* findNextLimit(Limit* currentLimit, bool orderType);
+    void removeLimit(Limit* limitToRemove);
+    
     int getCurrentTimeSeconds() const;
+    
+public:
+    Book();
+
+    void addOrderToBook(bool orderType, int size, float floatLimitPrice);
+    
+    void placeMarketOrder(int volume, bool orderType);
 
     Limit* getBuyTree() const;
     Limit* getSellTree() const;

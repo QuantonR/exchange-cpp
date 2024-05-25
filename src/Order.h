@@ -1,7 +1,3 @@
-//
-// Created by Riccardo on 17/02/2024.
-//
-
 #pragma once
 
 #include <boost/uuid/uuid.hpp>
@@ -18,10 +14,10 @@ class Order {
      * -nextOrder, prevOrder: These are pointers that link the Order instances together. This is critical for order execution logic, ensuring that orders are processed in the correct sequence.
      */
     const std::string idNumber;
-    bool orderType;
+    const bool orderType;
     int shares;
-    int limit;
-    int entryTime;
+    const int limit;
+    const int entryTime;
     int eventTime;
     Order *nextOrder;
     Order *prevOrder;
@@ -38,6 +34,8 @@ public:
     void setNextOrder(Order *nextOrder);
 
     void setPrevOrder(Order *prevOrder);
+    
+    void setShares(const int shares);
 
     int getLimit() const;
 

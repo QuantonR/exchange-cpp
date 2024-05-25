@@ -47,25 +47,13 @@ Limit* Limit::addLimit(int size, int limitPrice, bool orderType) {
 
 void Limit::partialFill(int remainingVolume){
     
-    totalVolume -= remainingVolume;
-    while (remainingVolume > 0 && headOrder){
+    setTotalVolume(totalVolume - remainingVolume);
+    
+    while (remainingVolume!=0) {
         Order* order = getHeadOrder();
-        int orderShares = order->getShares();
-
-        if (remainingVolume >= orderShares){
-            
-            remainingVolume -= orderShares;
-            size -= 1;
-            Order* nxtOrder = order -> getNextOrder();
-            headOrder.reset(nxtOrder);
-            if (headOrder){
-                headOrder -> setPrevOrder(nullptr);
-            } else {
-                tailOrder = nullptr;
-            }
-        } else {
-            order -> setShares(orderShares - remainingVolume);
-            remainingVolume = 0;
+        int shares = order->getShares();
+        if (remainingVolume < order->shares){
+            order->setShares(order);
         }
     }
 }
@@ -91,16 +79,12 @@ Order* Limit::getTailOrder() const {
     return tailOrder;
 }
 
-void Limit::setLeftChild(std::unique_ptr<Limit> left) {
+void Limit::setLeftChild(const std::unique_ptr<Limit>& left) {
     leftChild = std::move(left);
 }
 
-void Limit::setRightChild(std::unique_ptr<Limit> right) {
+void Limit::setRightChild(const std::unique_ptr<Limit>& right) {
     rightChild = std::move(right);
-}
-
-void Limit::setTotalVolume(const int& newVolume){
-    totalVolume=newVolume;
 }
 
 Limit* Limit::getLeftChild() const {
