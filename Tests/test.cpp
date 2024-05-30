@@ -208,6 +208,25 @@ TEST_F(OrderBookTest, MarketOrdersThatCancelFirstLevel){
     EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 6);
 }
 
+TEST_F(OrderBookTest, MarketOrderThatEmptiesOrderBook){
+    
+    orderBook->addOrderToBook(true, 3, 30);
+
+    orderBook->placeMarketOrder(3, false);
+    
+    EXPECT_EQ(orderBook->getHighestBuy(), nullptr);
+    EXPECT_EQ(orderBook->getBuyTree(), nullptr);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
+    
+    orderBook->addOrderToBook(true, 10, 10);
+    
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 10);
+    EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 1000);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+}
+
 TEST_F(OrderBookTest, MarketOrderWithNoBook) {
     EXPECT_THROW({
         orderBook->placeMarketOrder(11, false); // Market Order with no order book
@@ -272,4 +291,28 @@ TEST_F(OrderBookTest, TestLimitCrossFirstLevel){
     EXPECT_EQ(orderBook->getLowestSell()->getLimitPrice(), 4500);
     EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 2);
     EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 4250);
+}
+
+TEST_F(OrderBookTest, LimitCancelFullBook){
+    
+    orderBook->addOrderToBook(false, 10, 45);
+    orderBook->addOrderToBook(false, 5, 40);
+    orderBook->addOrderToBook(true, 15, 50);
+    
+    EXPECT_EQ(orderBook->getHighestBuy(), nullptr);
+    EXPECT_EQ(orderBook->getBuyTree(), nullptr);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
+}
+
+TEST_F(OrderBookTest, LimitCancelBookAndPlaceOrder){
+    
+    orderBook->addOrderToBook(false, 10, 45);
+    orderBook->addOrderToBook(false, 5, 40);
+    orderBook->addOrderToBook(true, 20, 50);
+    
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 5);
+    EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 5000);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
 }

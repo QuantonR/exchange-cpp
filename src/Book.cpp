@@ -87,6 +87,11 @@ void Book::placeMarketOrder(int volume, bool orderType){
     if (volume > treeSize){
         throw std::runtime_error("The market order size is too big and it can't be executed right now.");
     }
+    if (orderType){
+        sellTreeSize -= volume;
+    } else {
+        buyTreeSize -= volume;
+    }
     while (volume > 0 && limitToExecute){
         // Todo: what happens if it the book is just one limit order and the placed market order cancel the full limit and there still are volumes in the market order? One solution could be to store the total volume of the buy and sell side and check if the market order volumes are more than those values
         executeOrder(volume, limitToExecute, orderType);
@@ -94,7 +99,7 @@ void Book::placeMarketOrder(int volume, bool orderType){
 }
 
 void Book::executeOrder(int& remainingVolume, Limit*& limitToExecute, const bool& orderType){
-        
+    
     int limitVolume = limitToExecute -> getTotalVolume();
     if (remainingVolume >= limitVolume){
         remainingVolume -= limitVolume;
@@ -107,7 +112,6 @@ void Book::executeOrder(int& remainingVolume, Limit*& limitToExecute, const bool
         remainingVolume = 0;
     }
 }
-
 Limit* Book::findNextLimit(Limit* currentLimit, bool orderType) {
     if (orderType) {
         // For buy orders, find the next highest buy limit
@@ -141,14 +145,18 @@ Limit* Book::findNextLimit(Limit* currentLimit, bool orderType) {
     return nullptr; // If there is no next limit
 }
 
-
 void Book::removeLimit(Limit* limit) {
-    
     if (limit == highestBuy) {
         highestBuy = findNextLimit(limit, false);
+        if (highestBuy == nullptr) {
+            buyTree.reset();
+        }
     }
     if (limit == lowestSell) {
         lowestSell = findNextLimit(limit, true);
+        if (lowestSell == nullptr) {
+            sellTree.reset();
+        }
     }
 
     if (limit->getParent()) {
@@ -159,7 +167,6 @@ void Book::removeLimit(Limit* limit) {
             parent->setRightChild(nullptr);
         }
     }
-    // unique_ptr will take care of deallocating memory
     limit = nullptr;
 }
 

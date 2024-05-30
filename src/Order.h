@@ -26,30 +26,20 @@ class Order {
 public:
 
     Order(bool orderType, int shares, int limit, int entryTime, Limit *parentLimit);
-
     Order();
 
     static const std::string generateUuid();
 
     void setNextOrder(Order *nextOrder);
-
     void setPrevOrder(Order *prevOrder);
-    
     void setShares(const int shares);
 
     int getLimit() const;
-
     bool getOrderType() const;
-
     Order* getNextOrder() const;
-
     Order* getPrevOrder() const;
-
     Limit* getParentLimit() const;
-
     int getEntryTime() const;
-
     int getEventTime() const;
-    
     int getShares() const;
 };

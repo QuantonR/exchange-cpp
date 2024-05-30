@@ -23,15 +23,15 @@ const std::string Order::generateUuid() {
 }
 
 void Order::setNextOrder(Order *nextOrder) {
-    Order::nextOrder = nextOrder;
+    this->nextOrder = nextOrder;
 }
 
 void Order::setPrevOrder(Order *prevOrder) {
-    Order::prevOrder = prevOrder;
+    this->prevOrder = prevOrder;
 };
 
 void Order::setShares(const int shares){
-    Order::shares = shares;
+    this->shares = shares;
 }
 
 int Order::getLimit() const {

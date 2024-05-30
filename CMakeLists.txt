@@ -50,6 +50,19 @@ target_link_libraries(exchange_test PRIVATE
     ${Boost_LIBRARIES}
 )
 
+# Define an executable for the test suite
+add_executable(exchange_benchmark
+    benchmark/benchmark.cpp
+)
+
+# Link libraries to your test executable
+target_link_libraries(exchange_test PRIVATE
+    exchange_lib
+    CURL::libcurl
+    nlohmann_json::nlohmann_json
+    ${Boost_LIBRARIES}
+)
+
 # Set properties for the C++ standard
 set_target_properties(exchange_lib exchange_test PROPERTIES
   CXX_STANDARD 20
