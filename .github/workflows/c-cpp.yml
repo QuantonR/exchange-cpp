@@ -18,20 +18,6 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cmake g++ libcurl4-openssl-dev
 
-    - name: Install Boost from source
-      run: |
-        wget https://boostorg.jfrog.io/artifactory/main/release/1.84.0/source/boost_1_84_0.tar.bz2
-        tar --bzip2 -xf boost_1_84_0.tar.bz2
-        cd boost_1_84_0
-        ./bootstrap.sh --prefix=/usr/local
-        sudo ./b2 install
-
-    - name: Install nlohmann_json and Google Test
-      run: |
-        sudo apt-get install -y nlohmann-json3-dev
-        sudo apt-get install -y libgtest-dev
-        sudo apt-get install -y googletest
-
     - name: Set up CMake
       run: |
         mkdir build
