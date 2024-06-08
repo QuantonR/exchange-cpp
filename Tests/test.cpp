@@ -13,9 +13,7 @@ protected:
         orderBook = std::make_unique<Book>(); // Reinitialize the Book object for each test
     }
 
-    void TearDown() override {
-        // Cleanup is managed by smart pointers
-    }
+    void TearDown() override {}
 };
 
 GTEST_API_ int main(int argc, char **argv) {
@@ -171,4 +169,150 @@ TEST_F(OrderBookTest, LimitAddLimitTest){
     
     buyTree->addLimit(15, 3410, true);
     Limit* newLimit = buyTree->getLeftChild();
+}
+
+TEST_F(OrderBookTest, singleMarketOrderSell){
+    
+    orderBook->addOrderToBook(false, 3, 30.0002); // Initial best sell
+    orderBook->addOrderToBook(false, 2, 29.14); // Better sell
+
+    EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 2);
+    orderBook->placeMarketOrder(1, true);
+    EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 1);
+}
+
+TEST_F(OrderBookTest, singleMarketOrderBuy){
+    
+    orderBook->addOrderToBook(true, 3, 50.14); // Initial best buy
+    orderBook->addOrderToBook(true, 10, 55); // Better sell
+
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 10);
+    orderBook->placeMarketOrder(5, false);
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 5);
+}
+
+TEST_F(OrderBookTest, MarketOrdersThatCancelFirstLevel){
+    
+    orderBook->addOrderToBook(true, 3, 30); // Initial best buy
+    orderBook->addOrderToBook(true, 10, 35); // Better buy
+    orderBook->addOrderToBook(false, 7, 55); // Initial best sell
+    orderBook->addOrderToBook(false, 14, 50); // Better sell
+
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 10);
+    EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 14);
+
+    orderBook->placeMarketOrder(11, false);
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 2);
+    
+    orderBook->placeMarketOrder(15, true);
+    EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 6);
+}
+
+TEST_F(OrderBookTest, MarketOrderThatEmptiesOrderBook){
+    
+    orderBook->addOrderToBook(true, 3, 30);
+
+    orderBook->placeMarketOrder(3, false);
+    
+    EXPECT_EQ(orderBook->getHighestBuy(), nullptr);
+    EXPECT_EQ(orderBook->getBuyTree(), nullptr);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
+    
+    orderBook->addOrderToBook(true, 10, 10);
+    
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 10);
+    EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 1000);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+}
+
+TEST_F(OrderBookTest, MarketOrderWithNoBook) {
+    EXPECT_THROW({
+        orderBook->placeMarketOrder(11, false); // Market Order with no order book
+    }, std::runtime_error);
+}
+
+TEST_F(OrderBookTest, MarketOrderSizeGreaterThenBook) {
+    EXPECT_THROW({
+        orderBook->addOrderToBook(false, 3.15, 1);
+        orderBook->placeMarketOrder(15, true); // Market Order with size greater than order book
+    }, std::runtime_error);
+}
+
+
+TEST_F(OrderBookTest, TestSellLimitOrdersCrossingSpread){
+    
+    orderBook->addOrderToBook(true, 50, 15);
+    
+    orderBook->addOrderToBook(false, 40, 7);
+    
+    EXPECT_EQ(orderBook -> getHighestBuy()->getTotalVolume(), 10);
+    EXPECT_EQ(orderBook -> getHighestBuy()->getLimitPrice(), 1500);
+}
+
+TEST_F(OrderBookTest, TestBuyLimitOrdersCrossingSpread){
+    
+    orderBook->addOrderToBook(false, 60, 24);
+    
+    orderBook->addOrderToBook(true, 70, 30);
+    
+    EXPECT_EQ(orderBook -> getHighestBuy()->getTotalVolume(), 10);
+    EXPECT_EQ(orderBook -> getHighestBuy()->getLimitPrice(), 3000);
+}
+
+TEST_F(OrderBookTest, TestLimitOrderFillsBestSellLimit){
+    
+    orderBook->addOrderToBook(false, 35, 24.9); // best sell
+    orderBook->addOrderToBook(false, 100, 30); // second level sell
+    orderBook->addOrderToBook(true, 75, 35); // buy order that crosses the spread
+    
+    EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 60);
+    EXPECT_EQ(orderBook->getLowestSell()->getLimitPrice(), 3000);
+}
+
+TEST_F(OrderBookTest, TestLimitOrderFillsBestBuyLimit){
+    
+    orderBook->addOrderToBook(true, 35, 24.9); // first best buy
+    orderBook->addOrderToBook(true, 100, 30); // new best buy
+    orderBook->addOrderToBook(false, 115, 20); // sell that crosses the spread
+    
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 20);
+    EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 2490);
+}
+
+TEST_F(OrderBookTest, TestLimitCrossFirstLevel){
+    
+    orderBook->addOrderToBook(false, 10, 45);
+    orderBook->addOrderToBook(false, 5, 40);
+    orderBook->addOrderToBook(true, 7, 42.5);
+    
+    EXPECT_EQ(orderBook->getLowestSell()->getTotalVolume(), 10);
+    EXPECT_EQ(orderBook->getLowestSell()->getLimitPrice(), 4500);
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 2);
+    EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 4250);
+}
+
+TEST_F(OrderBookTest, LimitCancelFullBook){
+    
+    orderBook->addOrderToBook(false, 10, 45);
+    orderBook->addOrderToBook(false, 5, 40);
+    orderBook->addOrderToBook(true, 15, 50);
+    
+    EXPECT_EQ(orderBook->getHighestBuy(), nullptr);
+    EXPECT_EQ(orderBook->getBuyTree(), nullptr);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
+}
+
+TEST_F(OrderBookTest, LimitCancelBookAndPlaceOrder){
+    
+    orderBook->addOrderToBook(false, 10, 45);
+    orderBook->addOrderToBook(false, 5, 40);
+    orderBook->addOrderToBook(true, 20, 50);
+    
+    EXPECT_EQ(orderBook->getHighestBuy()->getTotalVolume(), 5);
+    EXPECT_EQ(orderBook->getHighestBuy()->getLimitPrice(), 5000);
+    EXPECT_EQ(orderBook->getLowestSell(), nullptr);
+    EXPECT_EQ(orderBook->getSellTree(), nullptr);
 }

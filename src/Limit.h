@@ -1,10 +1,7 @@
-//
-// Created by Riccardo on 17/02/2024.
-//
-
 #pragma once
 
 #include "Order.h"
+#include <memory>
 
 class Order;
 
@@ -19,7 +16,7 @@ class Limit {
      *  executing or removing orders from the front.
      */
 private:
-    int limitPrice;
+    const int limitPrice;
     int size;
     int totalVolume;
     Limit* parent; // Raw pointer as ownership is managed by the book
@@ -32,9 +29,12 @@ public:
     Limit(int limitPrice, Limit* parent); // Constructor
 
     void addOrderToLimit(bool orderType, int size, int entryTime); // Adds an order to this limit
+    void partialFill(int remainingVolume); // Executes a partial fill of an order
     int getLimitPrice() const; // Getter for limit price
     int getSize() const; // Getter for size
     int getTotalVolume() const; // Getter for total volume
+    
+    Limit* getParent() const; // Getter for parent
 
     Order* getHeadOrder() const; // Getter for headOrder
     Order* getTailOrder() const; // Getter for tailOrder
@@ -42,6 +42,9 @@ public:
     // Setters for smart pointer managed members
     void setLeftChild(std::unique_ptr<Limit> left);
     void setRightChild(std::unique_ptr<Limit> right);
+    void setTotalVolume(const int& newVolume);
+    
+    void decreaseSize(const int& newSize);
 
     // Getters for smart pointer managed members (returns raw pointers for internal manipulation)
     Limit* getLeftChild() const;
