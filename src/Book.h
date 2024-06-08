@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ostream>
-#include <memory>
 #include <math.h>
 #include <chrono>
 #include "Limit.h"

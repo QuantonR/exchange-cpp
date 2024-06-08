@@ -1,11 +1,13 @@
 #include "Order.h"
 
-Order::Order() : idNumber("0"), orderType(true), shares(0), limit(0), entryTime(0),
+int Order::idNumber = 0;
+
+Order::Order() : orderType(true), shares(0), limit(0), entryTime(0),
                  eventTime(0), nextOrder(nullptr), prevOrder(nullptr),
                  parentLimit(nullptr) {}
 
 Order::Order(bool orderType, int shares, int limit, int entryTime, Limit *parentLimit) :
-                idNumber(Order::generateUuid()), orderType(orderType), shares(shares), limit(limit),
+                orderType(orderType), shares(shares), limit(limit),
                 entryTime(entryTime), eventTime(entryTime), nextOrder(nullptr), prevOrder(nullptr), parentLimit(parentLimit){
                     
                     if (limit <= 0){
@@ -14,12 +16,13 @@ Order::Order(bool orderType, int shares, int limit, int entryTime, Limit *parent
                     if (shares <= 0){
                         throw std::invalid_argument("The order size must be positive");
                     }
+                    
+                    updateId();
                 }
 
-const std::string Order::generateUuid() {
-    boost::uuids::random_generator generator;
-    boost::uuids::uuid uuid = generator();
-    return boost::uuids::to_string(uuid);
+int Order::updateId(){
+    
+    idNumber += 1;
 }
 
 void Order::setNextOrder(Order *nextOrder) {

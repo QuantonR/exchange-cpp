@@ -5,16 +5,17 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
 project(exchange_cpp)
 
-# Find required packages
-find_package(CURL REQUIRED)
-find_package(nlohmann_json REQUIRED)
-find_package(GTest REQUIRED)
-find_package(Boost 1.84.0 REQUIRED)
+# Set C++ standard for the entire project
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED YES)
+set(CMAKE_CXX_EXTENSIONS NO)
 
-# Include Boost headers
-include_directories(${Boost_INCLUDE_DIRS})
+# Include Google Test
+add_subdirectory(external/googletest)
 
 # Define a shared library with your project files
 add_library(exchange_lib SHARED
@@ -44,27 +45,22 @@ add_executable(exchange_test
 # Link libraries to your test executable
 target_link_libraries(exchange_test PRIVATE
     exchange_lib
-    CURL::libcurl
-    nlohmann_json::nlohmann_json
-    GTest::GTest
-    ${Boost_LIBRARIES}
+    gtest
+    gtest_main
 )
 
-# Define an executable for the test suite
+# Define an executable for the benchmark suite
 add_executable(exchange_benchmark
     benchmark/benchmark.cpp
 )
 
-# Link libraries to your test executable
-target_link_libraries(exchange_test PRIVATE
+# Link libraries to your benchmark executable
+target_link_libraries(exchange_benchmark PRIVATE
     exchange_lib
-    CURL::libcurl
-    nlohmann_json::nlohmann_json
-    ${Boost_LIBRARIES}
 )
 
 # Set properties for the C++ standard
-set_target_properties(exchange_lib exchange_test PROPERTIES
+set_target_properties(exchange_lib exchange_test exchange_benchmark PROPERTIES
   CXX_STANDARD 20
   CXX_STANDARD_REQUIRED YES
   CXX_EXTENSIONS NO
