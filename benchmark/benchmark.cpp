@@ -4,19 +4,17 @@ void Benchmark::addLimits(const int numberOfLimitsToPlace) const{
     
     for(int i=0; i<numberOfLimitsToPlace; ++i){
         
-        // adding orders
         if (i < numberOfLimitsToPlace / 2){
+            // first place buy orders
             orderBook->addOrderToBook(true, 50, i + 1);
+            if ((i + 1) % 100 == 0){
+                // execute sell mkt orders
+                // orderBook->placeMarketOrder(50, false);  // Sell market order
+            }
         } else {
-            orderBook->addOrderToBook(true, 50, i + 1);
-        }
-        
-        // executing market orders
-        if ((i + 1) % 100 == 0) {
-            if ((i / 100) % 2 == 0) {
-                orderBook->placeMarketOrder(50, false);  // Sell market order
-            } else {
-                orderBook->placeMarketOrder(50, true);  // Buy market order
+            orderBook->addOrderToBook(false, 50, i + 1);
+            if ((i + 1) % 100 == 0){
+                // orderBook->placeMarketOrder(50, true);  // Buy market order
             }
         }
     }
@@ -30,6 +28,7 @@ int main(){
     Benchmark("Adding 1000 limits", 1000);
     Benchmark("Adding 10000 limits", 10000);
     Benchmark("Adding 100000 limits", 100000);
-
+    Benchmark("Adding 41460256 limits", 41460256);
+    
     return;
 }

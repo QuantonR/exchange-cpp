@@ -1,11 +1,11 @@
 #include "Limit.h"
 
 // Constructor
-Limit::Limit(int limitPrice, Limit* parent)
-    : limitPrice(limitPrice), size(0), totalVolume(0), parent(parent),
-      leftChild(nullptr), rightChild(nullptr), headOrder(nullptr), tailOrder(nullptr) {}
+Limit::Limit(int limitPrice)
+    : limitPrice(limitPrice), size(0), totalVolume(0),
+      headOrder(nullptr), tailOrder(nullptr) {}
 
-void Limit::addOrderToLimit(bool orderType, int orderShares, int entryTime) {
+std::unique_ptr<Order> Limit::addOrderToLimit(Side orderType, int orderShares, int entryTime) {
     
     // This will create a new Order and add it to the Limit
     auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, this);
@@ -23,26 +23,8 @@ void Limit::addOrderToLimit(bool orderType, int orderShares, int entryTime) {
         tailOrder->setNextOrder(newOrder.get()); // Link the current tail with the new order
         tailOrder = newOrder.release(); // tailOrder now points to the new order, release ownership from newOrder
     }
-}
-
-Limit* Limit::addLimit(int size, int limitPrice, bool orderType) {
-    if (limitPrice < this->limitPrice) {
-        if (!leftChild) {
-            leftChild = std::make_unique<Limit>(limitPrice, this);
-            return leftChild.get();
-        } else {
-            return leftChild->addLimit(size, limitPrice, orderType);
-        }
-    } else if (limitPrice > this->limitPrice) {
-        if (!rightChild) {
-            rightChild = std::make_unique<Limit>(limitPrice, this);
-            return rightChild.get();
-        } else {
-            return rightChild->addLimit(size, limitPrice, orderType);
-        }
-    }
-    // If the limit price is equal, we do not add a new limit; we just return this limit.
-    return this;
+    
+    return newOrder;
 }
 
 void Limit::partialFill(int remainingVolume){
@@ -70,6 +52,22 @@ void Limit::partialFill(int remainingVolume){
     }
 }
 
+void Limit::fullFill(std::vector<int>& executeOrderIds){
+    
+    while (headOrder) {
+        executeOrderIds.push_back(headOrder->getOrderId());
+        Order* nxtOrder = headOrder->getNextOrder();
+        headOrder.reset(nxtOrder);
+        if (headOrder) {
+            headOrder->setPrevOrder(nullptr);
+        } else {
+            tailOrder = nullptr;
+        }
+    }
+    size = 0;
+    totalVolume = 0;
+}
+
 // Getters & Setters
 int Limit::getLimitPrice() const {
     return limitPrice;
@@ -91,35 +89,6 @@ Order* Limit::getTailOrder() const {
     return tailOrder;
 }
 
-void Limit::setLeftChild(std::unique_ptr<Limit> left) {
-    leftChild = std::move(left);
-}
-
-void Limit::setRightChild(std::unique_ptr<Limit> right) {
-    rightChild = std::move(right);
-}
-
 void Limit::setTotalVolume(const int& newVolume){
     totalVolume=newVolume;
-}
-
-Limit* Limit::getLeftChild() const {
-    return leftChild.get();
-}
-
-Limit* Limit::getRightChild() const {
-    return rightChild.get();
-}
-
-std::unique_ptr<Limit>& Limit::getLeftUniquePtr() {
-    return leftChild;
-}
-
-std::unique_ptr<Limit>& Limit::getRightUniquePtr() {
-    return rightChild;
-}
-
-Limit* Limit::getParent() const{
-    
-    return parent;
 }

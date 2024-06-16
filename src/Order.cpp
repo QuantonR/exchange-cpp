@@ -1,14 +1,11 @@
 #include "Order.h"
 
-int Order::idNumber = 0;
+int Order::orderId = 0;
 
-Order::Order() : orderType(true), shares(0), limit(0), entryTime(0),
-                 eventTime(0), nextOrder(nullptr), prevOrder(nullptr),
-                 parentLimit(nullptr) {}
 
-Order::Order(bool orderType, int shares, int limit, int entryTime, Limit *parentLimit) :
+Order::Order(Side orderType, int shares, int limit, int entryTime, Limit *parentLimit) :
                 orderType(orderType), shares(shares), limit(limit),
-                entryTime(entryTime), eventTime(entryTime), nextOrder(nullptr), prevOrder(nullptr), parentLimit(parentLimit){
+                entryTime(entryTime), parentLimit(parentLimit), eventTime(entryTime), nextOrder(nullptr), prevOrder(nullptr) {
                     
                     if (limit <= 0){
                         throw std::invalid_argument("The price must be positive");
@@ -22,7 +19,7 @@ Order::Order(bool orderType, int shares, int limit, int entryTime, Limit *parent
 
 int Order::updateId(){
     
-    idNumber += 1;
+    orderId += 1;
 }
 
 void Order::setNextOrder(Order *nextOrder) {
@@ -41,7 +38,7 @@ int Order::getLimit() const {
     return limit;
 };
 
-bool Order::getOrderType() const {
+Side Order::getOrderType() const {
 
     return orderType;
 };
@@ -75,3 +72,8 @@ int Order::getShares() const {
 
     return shares;
 };
+
+int Order::getOrderId() const{
+ 
+    return orderId;
+}

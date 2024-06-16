@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Order.h"
+#include "Side.hpp"
+#include<vector>
 #include <memory>
 
 class Order;
@@ -15,42 +17,35 @@ class Limit {
      *  -headOrder, tailOrder: these two pointers serves as entry points to the doubly linked list of order. This structure allows for FIFO order execution. It is used for adding new orders to the end of the list and for
      *  executing or removing orders from the front.
      */
+    
 private:
     const int limitPrice;
     int size;
     int totalVolume;
-    Limit* parent; // Raw pointer as ownership is managed by the book
-    std::unique_ptr<Limit> leftChild;
-    std::unique_ptr<Limit> rightChild;
     std::unique_ptr<Order> headOrder; // Unique_ptr for automatic memory management
     Order* tailOrder; // Raw pointer for traversal without ownership
 
 public:
-    Limit(int limitPrice, Limit* parent); // Constructor
+    Limit(int limitPrice); // Constructor
 
-    void addOrderToLimit(bool orderType, int size, int entryTime); // Adds an order to this limit
+    std::unique_ptr<Order> addOrderToLimit(Side orderType, int size, int entryTime); // Adds an order to this limit
     void partialFill(int remainingVolume); // Executes a partial fill of an order
+    void fullFill(std::vector<int>& executeOrderIds);
+    
+    void decreaseSize(const int& newSize);
+
+    Limit* addLimit(int size, int limitPrice, bool orderType);
+    
+    Limit& operator=(const Limit&) = delete;
+    Limit(const Limit&) = delete;
+    
     int getLimitPrice() const; // Getter for limit price
     int getSize() const; // Getter for size
     int getTotalVolume() const; // Getter for total volume
     
-    Limit* getParent() const; // Getter for parent
-
     Order* getHeadOrder() const; // Getter for headOrder
     Order* getTailOrder() const; // Getter for tailOrder
 
     // Setters for smart pointer managed members
-    void setLeftChild(std::unique_ptr<Limit> left);
-    void setRightChild(std::unique_ptr<Limit> right);
     void setTotalVolume(const int& newVolume);
-    
-    void decreaseSize(const int& newSize);
-
-    // Getters for smart pointer managed members (returns raw pointers for internal manipulation)
-    Limit* getLeftChild() const;
-    Limit* getRightChild() const;
-    Limit* addLimit(int size, int limitPrice, bool orderType);
-    
-    std::unique_ptr<Limit>& getRightUniquePtr();
-    std::unique_ptr<Limit>& getLeftUniquePtr();
 };
