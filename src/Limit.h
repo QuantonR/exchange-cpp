@@ -22,7 +22,7 @@ private:
     const int limitPrice;
     int size;
     int totalVolume;
-    std::unique_ptr<Order> headOrder; // Unique_ptr for automatic memory management
+    Order* headOrder; // Unique_ptr for automatic memory management
     Order* tailOrder; // Raw pointer for traversal without ownership
 
 public:

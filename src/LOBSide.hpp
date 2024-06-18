@@ -1,8 +1,7 @@
 #ifndef LOBSIDE_HPP
 #define LOBSIDE_HPP
 
-#include <unordered_map>
-#include<vector>
+#include <map>
 #include <memory>
 #include "Limit.h"
 #include "Side.hpp"
@@ -11,8 +10,7 @@
 template<Side S>
 class LOBSide {
 private:
-    std::unordered_map<int, std::unique_ptr<Limit>> sideTree;
-    std::vector<Limit*> limitsVect;
+    std::map<int, std::unique_ptr<Limit>> sideTree;
     int sideVolume;
     Limit* bestLimit;
     
@@ -21,10 +19,10 @@ public:
     
     Limit* findLimit(int limitPrice) const;
     std::unique_ptr<Order> addOrderToSide(int limitPrice, int volume);
-    void updateBestLimit(Limit* newLimit);
+    void updateBestLimit();
     void insertLimitToVect(Limit* limit);
     void placeMarketOrder(int volume, std::vector<int>& executeOrderIds);
-    void executeOrder(int& volume, Limit* LimitToExecute, std::vector<int>& executeOrderIds);
+    void executeOrder(int& volume, Limit*& LimitToExecute, std::vector<int>& executeOrderIds);
     
     static int getCurrentTimeSeconds();
     
@@ -46,10 +44,10 @@ std::unique_ptr<Order> LOBSide<S>::addOrderToSide(int limitPrice, int volume) {
         auto newLimit = std::make_unique<Limit>(limitPrice);
         limitToAdd = newLimit.get();
         sideTree.insert({limitPrice, std::move(newLimit)});
-        updateBestLimit(limitToAdd);
-        insertLimitToVect(limitToAdd);
+        updateBestLimit();
     }
     
+    // Maybe error here: No order are added to the Limit.
     return limitToAdd -> addOrderToLimit(S, volume, getCurrentTimeSeconds());
 }
 
@@ -64,22 +62,14 @@ Limit* LOBSide<S>::findLimit(int limitPrice) const {
 }
 
 template<Side S>
-void LOBSide<S>::insertLimitToVect(Limit* limit) {
-    auto it = std::lower_bound(limitsVect.begin(), limitsVect.end(), limit, [](const Limit* a, const Limit* b) {
-        return a->getLimitPrice() < b->getLimitPrice();
-    });
-    limitsVect.insert(it, limit);
-}
-
-template<Side S>
-void LOBSide<S>::updateBestLimit(Limit* newLimit) {
-    if constexpr (S == Side::Buy) {
-        if ((!bestLimit) || newLimit->getLimitPrice() > bestLimit->getLimitPrice()) {
-            bestLimit = newLimit;
-        }
-    } else if constexpr (S == Side::Sell) {
-        if ((!bestLimit) || newLimit->getLimitPrice() < bestLimit->getLimitPrice()) {
-            bestLimit = newLimit;
+void LOBSide<S>::updateBestLimit() {
+    if (sideTree.empty()) {
+        bestLimit = nullptr;
+    } else {
+        if constexpr (S == Side::Buy) {
+            bestLimit = sideTree.rbegin()->second.get();  // Highest price for buy side
+        } else if constexpr (S == Side::Sell) {
+            bestLimit = sideTree.begin()->second.get();   // Lowest price for sell side
         }
     }
 }
@@ -103,7 +93,7 @@ void LOBSide<S>::placeMarketOrder(int volume, std::vector<int>& executeOrderIds)
 }
 
 template<Side S>
-void LOBSide<S>::executeOrder(int& volume, Limit* limitToExecute, std::vector<int>& executeOrderIds){
+void LOBSide<S>::executeOrder(int& volume, Limit*& limitToExecute, std::vector<int>& executeOrderIds){
     
     const int limitVolume = limitToExecute -> getTotalVolume();
     if (limitVolume > volume) {
@@ -115,14 +105,9 @@ void LOBSide<S>::executeOrder(int& volume, Limit* limitToExecute, std::vector<in
 
         // Erase the current limit
         sideTree.erase(limitToExecute->getLimitPrice());
-        // Find the iterator for the current limit in the vector and erase it
-        auto it = std::find(limitsVect.begin(), limitsVect.end(), limitToExecute);
-        if (it != limitsVect.end()) {
-            limitsVect.erase(it);
-        }
         
         // Update best limit before erasing
-        bestLimit = limitsVect.at(0);
+        updateBestLimit();
         
         // Update limitToExecute to the new best limit
         limitToExecute = bestLimit;

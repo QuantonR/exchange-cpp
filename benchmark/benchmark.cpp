@@ -1,20 +1,25 @@
 #include "benchmark.hpp"
 
-void Benchmark::addLimits(const int numberOfLimitsToPlace) const{
+void Benchmark::addLimits(int numberOfLimitsToPlace) const{
     
+    numberOfLimitsToPlace = numberOfLimitsToPlace / 10;
     for(int i=0; i<numberOfLimitsToPlace; ++i){
         
         if (i < numberOfLimitsToPlace / 2){
             // first place buy orders
-            orderBook->addOrderToBook(true, 50, i + 1);
+            for(int j = 0; j < 10; ++j){
+                orderBook->addOrderToBook(true, 50, i + 1);
+            }
             if ((i + 1) % 100 == 0){
                 // execute sell mkt orders
-                // orderBook->placeMarketOrder(50, false);  // Sell market order
+                orderBook->placeMarketOrder(50, false);  // Sell market order
             }
         } else {
-            orderBook->addOrderToBook(false, 50, i + 1);
+            for(int j = 0; j < 10; ++j){
+                orderBook->addOrderToBook(false, 50, i + 1);
+            }
             if ((i + 1) % 100 == 0){
-                // orderBook->placeMarketOrder(50, true);  // Buy market order
+                orderBook->placeMarketOrder(50, true);  // Buy market order
             }
         }
     }

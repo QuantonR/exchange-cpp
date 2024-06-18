@@ -9,19 +9,20 @@ std::unique_ptr<Order> Limit::addOrderToLimit(Side orderType, int orderShares, i
     
     // This will create a new Order and add it to the Limit
     auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, this);
-
+    Order* newOrderPtr = newOrder.get();
+    
     // Increment totalVolume and size for the Limit
     totalVolume += orderShares;
     size += 1;
 
     if (!headOrder) {
         // If this is the first order, set head and tail to this order
-        headOrder = std::move(newOrder);
-        tailOrder = headOrder.get();
+        headOrder = newOrderPtr;
+        tailOrder = headOrder;
     } else {
-        newOrder->setPrevOrder(tailOrder); // Link the new order with the current tail
-        tailOrder->setNextOrder(newOrder.get()); // Link the current tail with the new order
-        tailOrder = newOrder.release(); // tailOrder now points to the new order, release ownership from newOrder
+        newOrderPtr->setPrevOrder(tailOrder); // Link the new order with the current tail
+        tailOrder->setNextOrder(newOrderPtr); // Link the current tail with the new order
+        tailOrder = newOrderPtr; // tailOrder now points to the new order
     }
     
     return newOrder;
@@ -39,7 +40,7 @@ void Limit::partialFill(int remainingVolume){
             remainingVolume -= orderShares;
             size -= 1;
             Order* nxtOrder = order -> getNextOrder();
-            headOrder.reset(nxtOrder);
+            headOrder = nxtOrder;
             if (headOrder){
                 headOrder -> setPrevOrder(nullptr);
             } else {
@@ -57,7 +58,7 @@ void Limit::fullFill(std::vector<int>& executeOrderIds){
     while (headOrder) {
         executeOrderIds.push_back(headOrder->getOrderId());
         Order* nxtOrder = headOrder->getNextOrder();
-        headOrder.reset(nxtOrder);
+        headOrder = nxtOrder;
         if (headOrder) {
             headOrder->setPrevOrder(nullptr);
         } else {
@@ -82,7 +83,7 @@ int Limit::getTotalVolume() const {
 }
 
 Order* Limit::getHeadOrder() const {
-    return headOrder.get();
+    return headOrder;
 }
 
 Order* Limit::getTailOrder() const {

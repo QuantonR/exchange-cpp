@@ -7,7 +7,7 @@ using namespace std::chrono;
 
 class OrderBookTest : public ::testing::Test {
 protected:
-    std::unique_ptr<Book> orderBook; // Use a smart pointer for Book
+    std::unique_ptr<Book> orderBook;
 
     void SetUp() override {
         orderBook = std::make_unique<Book>(); // Reinitialize the Book object for each test
@@ -21,6 +21,7 @@ GTEST_API_ int main(int argc, char **argv) {
     return RUN_ALL_TESTS();
 };
 
+// Todo: add tests for the presence of the single orders in Limits.
 TEST_F(OrderBookTest, AddingFirstBuyOrder) {
     float orderPrice = 25.09;
     int intOrderPrice = 2509;
