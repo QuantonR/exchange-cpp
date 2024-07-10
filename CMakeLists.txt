@@ -22,6 +22,7 @@ set(SOURCES
     src/Book.cpp
     src/Order.cpp
     src/Limit.cpp
+    src/Exchange.cpp
 )
 
 set(HEADERS
@@ -29,6 +30,7 @@ set(HEADERS
     src/Order.h
     src/Limit.h
     src/LOBSide.hpp
+    src/Exchange.hpp
     src/Side.hpp
 )
 

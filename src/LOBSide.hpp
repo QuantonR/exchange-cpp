@@ -1,3 +1,27 @@
+// An order book implementation
+//
+// MIT License
+//
+// Copyright (c) 2024 Riccardo Canton
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 #ifndef LOBSIDE_HPP
 #define LOBSIDE_HPP
 
@@ -6,53 +30,75 @@
 #include "Limit.h"
 #include "Side.hpp"
 
-
+/**
+ * @class LOBSide
+ * @brief Manages the buy or sell side of the order book.
+ * @tparam S Side of the order book (buy or sell).
+ */
 template<Side S>
 class LOBSide {
-private:
-    std::map<int, std::unique_ptr<Limit>> sideTree;
-    int sideVolume;
-    Limit* bestLimit;
-    
 public:
     LOBSide();
-    
+
     Limit* findLimit(int limitPrice) const;
-    std::unique_ptr<Order> addOrderToSide(int limitPrice, int volume);
-    void updateBestLimit();
-    void insertLimitToVect(Limit* limit);
-    void placeMarketOrder(int volume, std::vector<int>& executeOrderIds);
-    void executeOrder(int& volume, Limit*& LimitToExecute, std::vector<int>& executeOrderIds);
-    
-    static int getCurrentTimeSeconds();
-    
+    void addOrderToSide(int limitPrice, int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders);
+    void placeMarketOrder(int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders);
+    void executeOrder(int& volume, Limit*& LimitToExecute, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders);
+    void cancelLimit(Limit* limitToCancel);
+
     LOBSide(const LOBSide&) = delete;
     LOBSide& operator=(const LOBSide&) = delete;
-    
+
+    // getters
     Limit* getBestLimit() const;
     int getSideVolume() const;
+    const std::map<int, std::unique_ptr<Limit>>& getSideTree() const;
+    
+private:
+    /// Stores all limits for this side, mapped by limit price
+    std::map<int, std::unique_ptr<Limit>> sideTree;
+    /// Total volume of orders for this side
+    int sideVolume;
+    /// Pointer to the best limit for this side
+    Limit* bestLimit;
+    
+    void updateBestLimit();
+    
+    static int getCurrentTimeSeconds();
 };
 
 template<Side S>
 LOBSide<S>::LOBSide() : sideVolume(0), bestLimit(nullptr) {}
 
+/**
+ * @brief Adds an order to the side of the order book.
+ * @param limitPrice Price of the limit order.
+ * @param volume Volume of the order.
+ * @param allOrders Reference to the map of all orders.
+ */
 template<Side S>
-std::unique_ptr<Order> LOBSide<S>::addOrderToSide(int limitPrice, int volume) {
+void LOBSide<S>::addOrderToSide(int limitPrice, int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
+    
     sideVolume += volume;
     Limit* limitToAdd = findLimit(limitPrice);
     if (!limitToAdd) {
         auto newLimit = std::make_unique<Limit>(limitPrice);
         limitToAdd = newLimit.get();
-        sideTree.insert({limitPrice, std::move(newLimit)});
+        sideTree.emplace(limitPrice, std::move(newLimit));
         updateBestLimit();
     }
-    
-    // Maybe error here: No order are added to the Limit.
-    return limitToAdd -> addOrderToLimit(S, volume, getCurrentTimeSeconds());
+
+    limitToAdd->addOrderToLimit(S, volume, getCurrentTimeSeconds(), allOrders);
 }
 
+/**
+ * @brief Finds a limit by its price.
+ * @param limitPrice Price of the limit.
+ * @return Pointer to the limit if found, nullptr otherwise.
+ */
 template<Side S>
 Limit* LOBSide<S>::findLimit(int limitPrice) const {
+    
     auto result = sideTree.find(limitPrice);
     if (result == sideTree.end()) {
         return nullptr;
@@ -61,8 +107,12 @@ Limit* LOBSide<S>::findLimit(int limitPrice) const {
     }
 }
 
+/**
+ * @brief Updates the best limit for the side.
+ */
 template<Side S>
 void LOBSide<S>::updateBestLimit() {
+    
     if (sideTree.empty()) {
         bestLimit = nullptr;
     } else {
@@ -74,61 +124,107 @@ void LOBSide<S>::updateBestLimit() {
     }
 }
 
+/**
+ * @brief Places a market order.
+ * @param volume Volume of the market order.
+ * @param allOrders Reference to the map of all orders.
+ */
 template<Side S>
-void LOBSide<S>::placeMarketOrder(int volume, std::vector<int>& executeOrderIds){
-    
-    if (volume > sideVolume){
+void LOBSide<S>::placeMarketOrder(int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
+    if (volume > sideVolume) {
         throw std::runtime_error("The market order size is too big and it can't be executed right now.");
     }
-    
+
     Limit* limitToExecute = bestLimit;
-    
-    if (limitToExecute == nullptr){
-        throw std::runtime_error("No corrisponding orders available to match the market order.");
+
+    if (limitToExecute == nullptr) {
+        throw std::runtime_error("No corresponding orders available to match the market order.");
     }
-    
-    while (volume > 0 && limitToExecute){
-        executeOrder(volume, limitToExecute, executeOrderIds);
+
+    while (volume > 0 && limitToExecute) {
+        executeOrder(volume, limitToExecute, allOrders);
     }
 }
 
+/**
+ * @brief Executes an order.
+ * @param volume Volume of the order to execute.
+ * @param limitToExecute Pointer to the limit to execute against.
+ * @param allOrders Reference to the map of all orders.
+ */
 template<Side S>
-void LOBSide<S>::executeOrder(int& volume, Limit*& limitToExecute, std::vector<int>& executeOrderIds){
-    
-    const int limitVolume = limitToExecute -> getTotalVolume();
+void LOBSide<S>::executeOrder(int& volume, Limit*& limitToExecute, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
+    const int limitVolume = limitToExecute->getTotalVolume();
     if (limitVolume > volume) {
-        limitToExecute -> partialFill(volume);
+        limitToExecute->partialFill(volume);
+        sideVolume -= volume;
         volume = 0;
     } else {
-        limitToExecute->fullFill(executeOrderIds);
-        volume -= limitVolume;
+        int orderVolume = limitVolume;
+        limitToExecute->fullFill(allOrders);
+        volume -= orderVolume;
+        sideVolume -= orderVolume;
 
-        // Erase the current limit
-        sideTree.erase(limitToExecute->getLimitPrice());
-        
-        // Update best limit before erasing
-        updateBestLimit();
-        
-        // Update limitToExecute to the new best limit
+        cancelLimit(limitToExecute);
         limitToExecute = bestLimit;
     }
 }
 
+/**
+ * @brief Cancels a limit from the side.
+ * @param limitToCancel Pointer to the limit to be canceled.
+ */
+template<Side S>
+void LOBSide<S>::cancelLimit(Limit* limitToCancel) {
+    // Ensure limitToCancel is valid
+    if (!limitToCancel) return;
+
+    // Update the volume of the side tree
+    sideVolume -= limitToCancel->getTotalVolume();
+
+    // Erase the limit from the side tree
+    sideTree.erase(limitToCancel->getLimitPrice());
+
+    limitToCancel = nullptr;
+
+    // Update best limit after erasing
+    updateBestLimit();
+}
+
+/**
+ * @brief Gets the current time.
+ * @return Current time.
+ */
 template<Side S>
 int LOBSide<S>::getCurrentTimeSeconds() {
     return static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 }
 
+/**
+ * @brief Returns the best limit for the side.
+ * @return Pointer to the best limit.
+ */
 template<Side S>
-Limit* LOBSide<S>::getBestLimit() const{
-    
+Limit* LOBSide<S>::getBestLimit() const {
     return bestLimit;
 }
 
+/**
+ * @brief Returns the total volume for the side.
+ * @return Total volume.
+ */
 template <Side S>
-int LOBSide<S>::getSideVolume() const{
-    
+int LOBSide<S>::getSideVolume() const {
     return sideVolume;
+}
+
+/**
+ * @brief Returns the side tree.
+ * @return Reference to the side tree.
+ */
+template<Side S>
+const std::map<int, std::unique_ptr<Limit>>& LOBSide<S>::getSideTree() const {
+    return sideTree;
 }
 
 #endif // LOBSIDE_HPP

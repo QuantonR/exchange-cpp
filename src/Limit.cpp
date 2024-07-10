@@ -5,12 +5,19 @@ Limit::Limit(int limitPrice)
     : limitPrice(limitPrice), size(0), totalVolume(0),
       headOrder(nullptr), tailOrder(nullptr) {}
 
-std::unique_ptr<Order> Limit::addOrderToLimit(Side orderType, int orderShares, int entryTime) {
+/**
+ * @brief Adds an order to this limit.
+ * @param orderType Type of the order.
+ * @param orderShares Number of shares for the order.
+ * @param entryTime Entry time of the order.
+ * @param allOrders Reference to the map of all orders.
+ */
+void Limit::addOrderToLimit(Side orderType, int orderShares, int entryTime, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
     
     // This will create a new Order and add it to the Limit
     auto newOrder = std::make_unique<Order>(orderType, orderShares, limitPrice, entryTime, this);
     Order* newOrderPtr = newOrder.get();
-    
+
     // Increment totalVolume and size for the Limit
     totalVolume += orderShares;
     size += 1;
@@ -24,49 +31,68 @@ std::unique_ptr<Order> Limit::addOrderToLimit(Side orderType, int orderShares, i
         tailOrder->setNextOrder(newOrderPtr); // Link the current tail with the new order
         tailOrder = newOrderPtr; // tailOrder now points to the new order
     }
-    
-    return newOrder;
+
+    allOrders.insert({newOrderPtr->getOrderId(), std::move(newOrder)});
 }
 
-void Limit::partialFill(int remainingVolume){
+/**
+ * @brief Partially fills an order at this limit.
+ * @param remainingVolume Volume to be filled.
+ */
+void Limit::partialFill(int remainingVolume) {
     
     totalVolume -= remainingVolume;
-    while (remainingVolume > 0 && headOrder){
+    while (remainingVolume > 0 && headOrder) {
         Order* order = getHeadOrder();
         int orderShares = order->getShares();
 
-        if (remainingVolume >= orderShares){
-            
+        if (remainingVolume >= orderShares) {
             remainingVolume -= orderShares;
-            size -= 1;
-            Order* nxtOrder = order -> getNextOrder();
+            decreaseSize();
+            Order* nxtOrder = order->getNextOrder();
             headOrder = nxtOrder;
-            if (headOrder){
-                headOrder -> setPrevOrder(nullptr);
+            if (headOrder) {
+                headOrder->setPrevOrder(nullptr);
             } else {
                 tailOrder = nullptr;
             }
         } else {
-            order -> setShares(orderShares - remainingVolume);
+            order->setShares(orderShares - remainingVolume);
             remainingVolume = 0;
         }
     }
 }
 
-void Limit::fullFill(std::vector<int>& executeOrderIds){
+/**
+ * @brief Fully fills the limit and removes all orders.
+ * @param allOrders Reference to the map of all orders.
+ */
+void Limit::fullFill(std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
     
-    while (headOrder) {
-        executeOrderIds.push_back(headOrder->getOrderId());
+    while (headOrder && tailOrder) {
         Order* nxtOrder = headOrder->getNextOrder();
-        headOrder = nxtOrder;
-        if (headOrder) {
-            headOrder->setPrevOrder(nullptr);
-        } else {
-            tailOrder = nullptr;
+
+        if (nxtOrder) {
+            nxtOrder->setPrevOrder(nullptr);
         }
+
+        allOrders.erase(headOrder->getOrderId());
+        headOrder = nullptr;
+        headOrder = nxtOrder;
     }
+
     size = 0;
     totalVolume = 0;
+}
+
+/**
+ * @brief Decreases the size of the limit.
+ */
+void Limit::decreaseSize() {
+    
+    if (size > 0) {
+        size -= 1;
+    }
 }
 
 // Getters & Setters
@@ -90,6 +116,14 @@ Order* Limit::getTailOrder() const {
     return tailOrder;
 }
 
-void Limit::setTotalVolume(const int& newVolume){
-    totalVolume=newVolume;
+void Limit::setTotalVolume(const int& newVolume) {
+    totalVolume = newVolume;
+}
+
+void Limit::setTailOrder(Order* newTailOrder) {
+    tailOrder = newTailOrder;
+}
+
+void Limit::setHeadOrder(Order* newHeadOrder) {
+    headOrder = newHeadOrder;
 }
