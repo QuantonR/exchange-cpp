@@ -1,191 +1,198 @@
 #include "Book.h"
 
 
-Book::Book() : buyTree(nullptr), sellTree(nullptr), lowestSell(nullptr), highestBuy(nullptr), buyTreeSize(0), sellTreeSize(0) {}
+Book::Book() : sellSide(std::make_unique<LOBSide<Side::Sell>>()), buySide(std::make_unique<LOBSide<Side::Buy>>()) {}
 
-void Book::addOrderToBook(bool orderType, int orderVolume, float floatLimitPrice) {
-    
-    int limitPrice = static_cast<int>(std::round(floatLimitPrice * 100)); // I decided to use int prices so, given 1.24 it will get converted to 124
-
-    // first thing we check if the new limit order crosses the spread.
-    while ((lowestSell && limitPrice > lowestSell ->getLimitPrice() && orderType && orderVolume) || (highestBuy && limitPrice < highestBuy -> getLimitPrice() && !orderType && orderVolume)) {
-        Limit* limitToExecute = orderType ? lowestSell : highestBuy;
-        executeOrder(orderVolume, limitToExecute, orderType);
-    }
-    
-    if (!orderVolume){
-        return;
-    }
-    
-    std::unique_ptr<Limit>& tree = orderType ? buyTree : sellTree;
-
-    if (orderType){
-        buyTreeSize += orderVolume;
-    } else{
-        sellTreeSize += orderVolume;
-    }
-
-    // Check if the limit already exists, and get or create a new limit as necessary.
-    Limit* limit = findLimit(tree.get(), limitPrice);
-    if (limit == nullptr) {
-        limit = addLimitToTree(tree, nullptr, orderVolume, limitPrice, orderType);
-    }
-    // Add the order to the found or new limit.
-    int entryTime = getCurrentTimeSeconds();
-    limit->addOrderToLimit(orderType, orderVolume, entryTime);
-    updateAfterAddingLimit(limit, orderType);
+/**
+ * @brief Adds an order to the correct side.
+ * @param side The side of the order (buy or sell)
+ * @param volume Volume of the order.
+ * @param allOrders Reference to the map of all orders.
+ */
+template<Side S>
+void addOrderToSide(LOBSide<S>& side, int limitPrice, int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
+    side.addOrderToSide(limitPrice, volume, allOrders);
 }
 
-Limit* Book::findLimit(Limit* root, int limitPrice) const {
-    Limit* current = root;
-    while (current != nullptr) {
-        if (current->getLimitPrice() == limitPrice) {
-            // Found the limit with the specified price
-            return current;
-        } else if (limitPrice < current->getLimitPrice()) {
-            // If the search price is less, go left
-            current = current->getLeftChild();
+/**
+ * @brief Places a market order on the correct side.
+ * @param side The side of the order execution.
+ * @param volume Volume of the order.
+ * @param allOrders Reference to the map of all orders.
+ */
+template<Side S>
+void placeMktOrder(LOBSide<S>& side, int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
+    side.placeMarketOrder(volume, allOrders);
+}
+
+/**
+ * @brief Adds an order to the order book.
+ * @param orderSide Type of the order (true for buy, false for sell).
+ * @param orderVolume Volume of the order.
+ * @param floatLimitPrice Price of the order.
+ */
+void Book::addOrderToBook(bool orderSide, int orderVolume, float floatLimitPrice) {
+    
+    int limitPrice = static_cast<int>(std::round(floatLimitPrice * 100));
+
+    Limit* bestLimitOppositeSide = (orderSide) ? sellSide->getBestLimit() : buySide->getBestLimit();
+
+    // Check if the new limit order crosses the spread. If so, start executing the order until it stops crossing the spread
+    while (bestLimitOppositeSide &&
+           ((orderSide && sellSide && sellSide->getBestLimit() && limitPrice > sellSide->getBestLimit()->getLimitPrice()) ||
+            (!orderSide && buySide && buySide->getBestLimit() && limitPrice < buySide->getBestLimit()->getLimitPrice()))) {
+        if (orderSide) {
+            sellSide->executeOrder(orderVolume, bestLimitOppositeSide, allOrders);
         } else {
-            // If the search price is greater, go right
-            current = current->getRightChild();
+            buySide->executeOrder(orderVolume, bestLimitOppositeSide, allOrders);
         }
+        if (!orderVolume) return; // Exit the loop if the order volume is completely executed
     }
-    // If we reach here, no limit with the specified price exists in the tree
-    return nullptr;
-}
 
-Limit* Book::addLimitToTree(std::unique_ptr<Limit>& tree, Limit* parent, int volume, int limitPrice, bool orderType) {
-    if (!tree) {
-        tree = std::make_unique<Limit>(limitPrice, parent);
-        // Update highestBuy or lowestSell immediately after adding the new limit
-        if (orderType) {
-            highestBuy = (highestBuy && highestBuy->getLimitPrice() > limitPrice) ? highestBuy : tree.get();
-        } else {
-            lowestSell = (lowestSell && lowestSell->getLimitPrice() < limitPrice) ? lowestSell : tree.get();
-        }
-        return tree.get();
+    if (orderSide) {
+        addOrderToSide(*buySide, limitPrice, orderVolume, allOrders);
     } else {
-        return tree->addLimit(volume, limitPrice, orderType);
+        addOrderToSide(*sellSide, limitPrice, orderVolume, allOrders);
     }
 }
 
-void Book::updateAfterAddingLimit(Limit* newLimit, bool isBuyOrder) {
-    if (isBuyOrder && (!highestBuy || newLimit->getLimitPrice() > highestBuy->getLimitPrice())) {
-        highestBuy = newLimit;
-    } else if (!isBuyOrder && (!lowestSell || newLimit->getLimitPrice() < lowestSell->getLimitPrice())) {
-        lowestSell = newLimit;
-    }
-}
-
-void Book::placeMarketOrder(int volume, bool orderType){
+/**
+ * @brief Places a market order.
+ * @param volume Volume of the market order.
+ * @param orderSide Type of the order (true for buy, false for sell).
+ */
+void Book::placeMarketOrder(int volume, bool orderSide) {
     
-    Limit* limitToExecute = orderType ? lowestSell : highestBuy;
-    if (limitToExecute == nullptr){
-        throw std::runtime_error("No corrisponding orders available to match the market order.");
-    }
-    int treeSize = orderType ? sellTreeSize : buyTreeSize;
-    if (volume > treeSize){
-        throw std::runtime_error("The market order size is too big and it can't be executed right now.");
-    }
-    if (orderType){
-        sellTreeSize -= volume;
+    if (orderSide) {
+        placeMktOrder(*sellSide, volume, allOrders);
     } else {
-        buyTreeSize -= volume;
-    }
-    while (volume > 0 && limitToExecute){
-        // Todo: what happens if it the book is just one limit order and the placed market order cancel the full limit and there still are volumes in the market order? One solution could be to store the total volume of the buy and sell side and check if the market order volumes are more than those values
-        executeOrder(volume, limitToExecute, orderType);
+        placeMktOrder(*buySide, volume, allOrders);
     }
 }
 
-void Book::executeOrder(int& remainingVolume, Limit*& limitToExecute, const bool& orderType){
+/**
+ * @brief Removes an order from its limit.
+ * @param orderToCancel Pointer to the order to be removed.
+ */
+void Book::removeOrderFromLimit(Order* orderToCancel) {
     
-    int limitVolume = limitToExecute -> getTotalVolume();
-    if (remainingVolume >= limitVolume){
-        remainingVolume -= limitVolume;
-        Limit* nextLimit = findNextLimit(limitToExecute, orderType);
-        removeLimit(limitToExecute);
-        limitToExecute = nextLimit;
-    } else {
-        
-        limitToExecute->partialFill(remainingVolume);
-        remainingVolume = 0;
-    }
-}
-Limit* Book::findNextLimit(Limit* currentLimit, bool orderType) {
-    if (orderType) {
-        // For buy orders, find the next highest buy limit
-        if (currentLimit->getRightChild()) {
-            currentLimit = currentLimit->getRightChild();
-            while (currentLimit->getLeftChild()) {
-                currentLimit = currentLimit->getLeftChild();
-            }
-            return currentLimit;
+    Order* nxtOrder = orderToCancel->getNextOrder();
+    Order* prevOrder = orderToCancel->getPrevOrder();
+    Limit* parent = orderToCancel->getParentLimit();
+
+    bool isOnlyOrder = (!nxtOrder && !prevOrder);
+    bool isLastOrder = (!nxtOrder && prevOrder);
+    bool isFirstOrder = (nxtOrder && !prevOrder);
+    bool isMiddleOrder = (nxtOrder && prevOrder);
+
+    if (isOnlyOrder) {
+        // Order to cancel is the only order in the limit
+        if (orderToCancel->getOrderType() == Side::Buy) {
+            buySide->cancelLimit(parent);
         } else {
-            while (currentLimit->getParent() && currentLimit == currentLimit->getParent()->getRightChild()) {
-                currentLimit = currentLimit->getParent();
-            }
-            return currentLimit->getParent();
+            sellSide->cancelLimit(parent);
         }
-    } else {
-        // For sell orders, find the next lowest sell limit
-        if (currentLimit->getLeftChild()) {
-            currentLimit = currentLimit->getLeftChild();
-            while (currentLimit->getRightChild()) {
-                currentLimit = currentLimit->getRightChild();
-            }
-            return currentLimit;
-        } else {
-            while (currentLimit->getParent() && currentLimit == currentLimit->getParent()->getLeftChild()) {
-                currentLimit = currentLimit->getParent();
-            }
-            return currentLimit->getParent();
-        }
-    }
-    return nullptr; // If there is no next limit
-}
-
-void Book::removeLimit(Limit* limit) {
-    if (limit == highestBuy) {
-        highestBuy = findNextLimit(limit, false);
-        if (highestBuy == nullptr) {
-            buyTree.reset();
-        }
-    }
-    if (limit == lowestSell) {
-        lowestSell = findNextLimit(limit, true);
-        if (lowestSell == nullptr) {
-            sellTree.reset();
-        }
+    } else if (isLastOrder) {
+        // Order to cancel is the last one in the limit
+        prevOrder->setNextOrder(nullptr);
+        parent->setTailOrder(prevOrder);
+    } else if (isFirstOrder) {
+        // Order to cancel is the first order in the limit
+        nxtOrder->setPrevOrder(nullptr);
+        parent->setHeadOrder(nxtOrder);
+    } else if (isMiddleOrder) {
+        // Order to cancel is in the middle of the limit
+        nxtOrder->setPrevOrder(prevOrder);
+        prevOrder->setNextOrder(nxtOrder);
     }
 
-    if (limit->getParent()) {
-        Limit* parent = limit->getParent();
-        if (parent->getLeftChild() == limit) {
-            parent->setLeftChild(nullptr);
-        } else if (parent->getRightChild() == limit) {
-            parent->setRightChild(nullptr);
-        }
+    // Update the limit's size and total volume
+    if (!isOnlyOrder) {
+        parent->decreaseSize();
+        parent->setTotalVolume(parent->getTotalVolume() - orderToCancel->getShares());
     }
-    limit = nullptr;
 }
 
-int Book::getCurrentTimeSeconds() const {
-    return static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+/**
+ * @brief Cancels an order by its ID.
+ * @param orderId ID of the order to be canceled.
+ */
+void Book::cancelOrder(int64_t orderId) {
+    
+    auto pairToCancel = allOrders.find(orderId);
+    if (pairToCancel == allOrders.end()) {
+        throw std::invalid_argument("Invalid order to cancel: the order is not in the Book");
+    }
+
+    auto orderToCancel = pairToCancel->second.get();
+    removeOrderFromLimit(orderToCancel);
+    allOrders.erase(orderId);  // Ensure this happens after the order is fully unlinked
 }
 
-Limit* Book::getBuyTree() const {
-    return buyTree.get();
+/**
+ * @brief Modifies the limit price of an order.
+ * @param orderId ID of the order to be modified.
+ * @param newLimit New limit price.
+ */
+void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice) {
+    
+    auto it = allOrders.find(orderId);
+    if (it == allOrders.end()) {
+        throw std::invalid_argument("Invalid order to modify: the order is not in the Book");
+    }
+
+    // Access order safely
+    auto orderToModify = it->second.get();
+
+    int orderSize = orderToModify->getShares();
+    Side orderSide = orderToModify->getOrderType();
+    bool Side = (orderSide == Side::Sell) ? false : true;
+
+    // Cancel the order and ensure it does not leave a dangling pointer
+    removeOrderFromLimit(orderToModify);
+
+    // Add the modified order back to the book
+    addOrderToBook(Side, orderSize, newLimitPrice);
 }
 
-Limit* Book::getSellTree() const {
-    return sellTree.get();
+/**
+ * @brief Modifies the size of an order.
+ * @param orderId ID of the order to be modified.
+ * @param newSize New size of the order.
+ */
+void Book::modifyOrderSize(int64_t orderId, int newSize) {
+    auto it = allOrders.find(orderId);
+    if (it == allOrders.end()) {
+        throw std::invalid_argument("Invalid order to modify: the order is not in the Book");
+    }
+    auto orderToModify = it->second.get();
+    int oldSize = orderToModify->getShares();
+    orderToModify->setShares(newSize);
+
+    Limit* parent = orderToModify->getParentLimit();
+    parent->setTotalVolume(parent->getTotalVolume() - oldSize + newSize);
 }
 
-Limit* Book::getLowestSell() const {
-    return lowestSell;
+/**
+ * @brief Returns the sell side of the order book.
+ * @return Pointer to the sell side.
+ */
+LOBSide<Side::Sell>* Book::getSellSide() const {
+    return sellSide.get();
 }
 
-Limit* Book::getHighestBuy() const {
-    return highestBuy;
+/**
+ * @brief Returns the buy side of the order book.
+ * @return Pointer to the buy side.
+ */
+LOBSide<Side::Buy>* Book::getBuySide() const {
+    return buySide.get();
+}
+
+/**
+ * @brief Returns all orders in the order book.
+ * @return Pointer to the unordered map containing all orders.
+ */
+const std::unordered_map<int64_t, std::unique_ptr<Order>>* Book::getAllOrders() const {
+    return &allOrders;
 }

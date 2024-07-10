@@ -17,25 +17,35 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Include Google Test
 add_subdirectory(external/googletest)
 
-# Define a shared library with your project files
-add_library(exchange_lib SHARED
+# Define the list of source and header files
+set(SOURCES
     src/Book.cpp
     src/Order.cpp
     src/Limit.cpp
-    src/Book.h
-    src/Order.h
-    src/Limit.h
+    src/Exchange.cpp
 )
 
-# Group source and header files in IDEs like Xcode
-source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES
-    src/Book.cpp
-    src/Order.cpp
-    src/Limit.cpp
+set(HEADERS
     src/Book.h
     src/Order.h
     src/Limit.h
+    src/LOBSide.hpp
+    src/Exchange.hpp
+    src/Side.hpp
 )
+
+# Check that all source files exist
+foreach(file ${SOURCES} ${HEADERS})
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${file}")
+        message(FATAL_ERROR "Cannot find source file: ${file}")
+    endif()
+endforeach()
+
+# Define a shared library with your project files
+add_library(exchange_lib SHARED ${SOURCES} ${HEADERS})
+
+# Group source and header files in IDEs like Xcode
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 # Define an executable for the test suite
 add_executable(exchange_test
