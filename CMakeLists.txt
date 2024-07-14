@@ -17,6 +17,9 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Include Google Test
 add_subdirectory(external/googletest)
 
+# Include QuickFIX headers
+add_subdirectory(external/quickfix)
+
 # Define the list of source and header files
 set(SOURCES
     src/Book.cpp
@@ -58,11 +61,12 @@ add_executable(exchange_test
     tests/main.cpp
 )
 
-# Link libraries to your test executable
+# Link libraries to your executable
 target_link_libraries(exchange_test PRIVATE
     exchange_lib
     gtest
     gtest_main
+    quickfix
 )
 
 # Define an executable for the benchmark suite
