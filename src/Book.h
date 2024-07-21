@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include <ostream>
 #include <cmath>
 #include <chrono>
 #include <unordered_map>
