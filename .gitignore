@@ -8,6 +8,4 @@ build/CMakeFiles/*.txt
 
 out/
 
-main.cpp
-
 benchmark/
