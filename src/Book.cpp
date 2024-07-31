@@ -1,72 +1,80 @@
 #include "Book.h"
 
-
-Book::Book() : sellSide(std::make_unique<LOBSide<Side::Sell>>()), buySide(std::make_unique<LOBSide<Side::Buy>>()) {}
+/**
+ * @brief Constructor that initializes the buy and sell sides of the order book.
+ */
+Book::Book() : sellSide(std::make_unique<LOBSide<Side::Sell>>(*this)), buySide(std::make_unique<LOBSide<Side::Buy>>(*this)) {}
 
 /**
- * @brief Adds an order to the correct side.
- * @param side The side of the order (buy or sell)
- * @param volume Volume of the order.
- * @param allOrders Reference to the map of all orders.
+ * @brief Template function to add an order to the correct side of the order book.
+ * @tparam S The side of the order (buy or sell).
+ * @param side Reference to the side of the order book.
+ * @param orderData Reference to the order data containing the order details.
+ * @param orderIdSequence Reference to the OrderIdSequence for generating a unique order ID.
  */
 template<Side S>
-void addOrderToSide(LOBSide<S>& side, int limitPrice, int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
-    side.addOrderToSide(limitPrice, volume, allOrders);
+void addOrderToSide(LOBSide<S>& side, OrderData orderData, OrderIdSequence& orderIdSequence) {
+    side.addOrderToSide(orderData, orderIdSequence);
 }
 
 /**
- * @brief Places a market order on the correct side.
- * @param side The side of the order execution.
- * @param volume Volume of the order.
- * @param allOrders Reference to the map of all orders.
+ * @brief Template function to place a market order on the correct side of the order book.
+ * @tparam S The side of the order execution.
+ * @param side Reference to the side of the order book.
+ * @param volume Volume of the market order.
  */
 template<Side S>
-void placeMktOrder(LOBSide<S>& side, int volume, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders) {
-    side.placeMarketOrder(volume, allOrders);
+void placeMktOrder(LOBSide<S>& side, int volume) {
+    side.placeMarketOrder(volume);
 }
 
 /**
- * @brief Adds an order to the order book.
- * @param orderSide Type of the order (true for buy, false for sell).
- * @param orderVolume Volume of the order.
- * @param floatLimitPrice Price of the order.
+ * @brief Adds an order to the order book, placing it on the correct side and executing against opposing orders if necessary.
+ * @param orderData Reference to the order data containing the order details.
+ * @param orderIdSequence Reference to the OrderIdSequence for generating a unique order ID.
  */
-void Book::addOrderToBook(bool orderSide, int orderVolume, float floatLimitPrice) {
+void Book::addOrderToBook(OrderData orderData, OrderIdSequence& orderIdSequence) {
     
-    int limitPrice = static_cast<int>(std::round(floatLimitPrice * 100));
-
-    Limit* bestLimitOppositeSide = (orderSide) ? sellSide->getBestLimit() : buySide->getBestLimit();
+    Limit* bestLimitOppositeSide = (orderData.orderSide == Side::Buy) ? sellSide->getBestLimit() : buySide->getBestLimit();
 
     // Check if the new limit order crosses the spread. If so, start executing the order until it stops crossing the spread
     while (bestLimitOppositeSide &&
-           ((orderSide && sellSide && sellSide->getBestLimit() && limitPrice > sellSide->getBestLimit()->getLimitPrice()) ||
-            (!orderSide && buySide && buySide->getBestLimit() && limitPrice < buySide->getBestLimit()->getLimitPrice()))) {
-        if (orderSide) {
-            sellSide->executeOrder(orderVolume, bestLimitOppositeSide, allOrders);
+           ((orderData.orderSide == Side::Buy && sellSide && sellSide->getBestLimit() && orderData.limit > sellSide->getBestLimit()->getLimitPrice()) ||
+            (orderData.orderSide == Side::Sell && buySide && buySide->getBestLimit() && orderData.limit < buySide->getBestLimit()->getLimitPrice()))) {
+        if (orderData.orderSide == Side::Buy) {
+            sellSide->executeOrder(orderData.shares, bestLimitOppositeSide);
         } else {
-            buySide->executeOrder(orderVolume, bestLimitOppositeSide, allOrders);
+            buySide->executeOrder(orderData.shares, bestLimitOppositeSide);
         }
-        if (!orderVolume) return; // Exit the loop if the order volume is completely executed
+        if (!orderData.shares) return; // Exit the loop if the order volume is completely executed
     }
 
-    if (orderSide) {
-        addOrderToSide(*buySide, limitPrice, orderVolume, allOrders);
+    if (orderData.orderSide == Side::Buy) {
+        addOrderToSide(*buySide, orderData, orderIdSequence);
     } else {
-        addOrderToSide(*sellSide, limitPrice, orderVolume, allOrders);
+        addOrderToSide(*sellSide, orderData, orderIdSequence);
     }
 }
 
 /**
- * @brief Places a market order.
- * @param volume Volume of the market order.
- * @param orderSide Type of the order (true for buy, false for sell).
+ * @brief Adds an order to the allOrders map.
+ * @param order A unique_ptr to the Order object to be added to the map.
  */
-void Book::placeMarketOrder(int volume, bool orderSide) {
+void Book::addOrderToAllOrders(std::unique_ptr<Order> order) {
+    allOrders.insert({order->getOrderId(), std::move(order)});
+}
+
+/**
+ * @brief Places a market order, executing it against the existing limit orders on the opposing side.
+ * @param volume Volume of the market order.
+ * @param orderSide The side of the market order (buy or sell).
+ */
+void Book::placeMarketOrder(const int volume, Side orderSide) {
     
-    if (orderSide) {
-        placeMktOrder(*sellSide, volume, allOrders);
+    if (orderSide == Side::Buy) {
+        placeMktOrder(*sellSide, volume);
     } else {
-        placeMktOrder(*buySide, volume, allOrders);
+        placeMktOrder(*buySide, volume);
     }
 }
 
@@ -87,7 +95,7 @@ void Book::removeOrderFromLimit(Order* orderToCancel) {
 
     if (isOnlyOrder) {
         // Order to cancel is the only order in the limit
-        if (orderToCancel->getOrderType() == Side::Buy) {
+        if (orderToCancel->getOrderSide() == Side::Buy) {
             buySide->cancelLimit(parent);
         } else {
             sellSide->cancelLimit(parent);
@@ -114,8 +122,17 @@ void Book::removeOrderFromLimit(Order* orderToCancel) {
 }
 
 /**
- * @brief Cancels an order by its ID.
+ * @brief Removes an order from the internal map of all orders in the book by its ID.
+ * @param orderId The ID of the order that needs to be removed from the map.
+ */
+void Book::removeOrderFromAllOrders(int64_t orderId) {
+    allOrders.erase(orderId);
+}
+
+/**
+ * @brief Cancels an order in the order book by its ID, removing it from the corresponding limit and the internal order map.
  * @param orderId ID of the order to be canceled.
+ * @throws std::invalid_argument if the order ID is not found in the book.
  */
 void Book::cancelOrder(int64_t orderId) {
     
@@ -130,11 +147,13 @@ void Book::cancelOrder(int64_t orderId) {
 }
 
 /**
- * @brief Modifies the limit price of an order.
+ * @brief Modifies the limit price of an order by canceling it and re-adding it with the new price.
  * @param orderId ID of the order to be modified.
- * @param newLimit New limit price.
+ * @param newLimitPrice The new limit price for the order.
+ * @param orderIdSequence Reference to the OrderIdSequence for generating a new unique order ID.
+ * @throws std::invalid_argument if the order ID is not found in the book.
  */
-void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice) {
+void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice, OrderIdSequence& orderIdSequence) {
     
     auto it = allOrders.find(orderId);
     if (it == allOrders.end()) {
@@ -144,21 +163,20 @@ void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice) {
     // Access order safely
     auto orderToModify = it->second.get();
 
-    int orderSize = orderToModify->getShares();
-    Side orderSide = orderToModify->getOrderType();
-    bool Side = (orderSide == Side::Sell) ? false : true;
-
+    OrderData modifiedOrderData = OrderData(orderToModify->getOrderSide(), orderToModify->getShares(), newLimitPrice, orderToModify->getOrderType());
+    
     // Cancel the order and ensure it does not leave a dangling pointer
     removeOrderFromLimit(orderToModify);
-
+    
     // Add the modified order back to the book
-    addOrderToBook(Side, orderSize, newLimitPrice);
+    addOrderToBook(modifiedOrderData, orderIdSequence);
 }
 
 /**
- * @brief Modifies the size of an order.
+ * @brief Modifies the size (volume) of an order in the order book.
  * @param orderId ID of the order to be modified.
- * @param newSize New size of the order.
+ * @param newSize The new size (volume) for the order.
+ * @throws std::invalid_argument if the order ID is not found in the book.
  */
 void Book::modifyOrderSize(int64_t orderId, int newSize) {
     auto it = allOrders.find(orderId);

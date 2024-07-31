@@ -28,31 +28,27 @@
 #define Exchange_hpp
 
 #include "Book.h"
+#include <cassert>
 #include <utility>
 #include <optional>
 #include <vector>
 #include <unordered_map>
 #include <string>
 
-enum class OrderType {
-    GoodTillCancel,
-    Market
-};
-
 /**
  * @class Exchange
- * @brief Represents an exchange that manages order books for multiple tickers.
+ * @brief Represents an exchange that manages order books for multiple instruments (tickers), allowing for adding, modifying, and removing orders.
  */
+
 class Exchange {
 public:
-    
     Exchange(const std::string& exchangeName);
-
-    void addOrder(const std::string& ticker, bool orderSide, int orderVolume, OrderType orderType, std::optional<float> floatLimitPrice = std::nullopt);
-
+    
+    void addOrder(const std::string& ticker, OrderData& orderData);
+    
     void modifyLimitPrice(const std::string& ticker, int64_t orderId, int newLimitPrice);
     void modifyOrderSize(const std::string& ticker, int64_t orderId, int newSize);
-
+    
     void addInstrument(const std::string& newTicker);
     void removeInstrument(const std::string& ticker);
     
@@ -60,11 +56,17 @@ public:
     std::vector<std::string> getTickerList() const;
     std::pair<std::optional<int>, std::optional<int>> getNBBO(const std::string& ticker) const;
     
+    // Deleted copy constructor and assignment operator to prevent copying
+    Exchange(const Exchange&) = delete;
+    Exchange& operator=(const Exchange&) = delete;
+    
 private:
     /// a map of ticker symbols to their respective order books
     std::unordered_map<std::string, std::unique_ptr<Book>> tickerLob;
     /// the name of the exchange
     std::string exchangeName;
+    /// Order ID sequence generator
+    OrderIdSequence globalOrderId;
 };
 
 #endif /* Exchange_hpp */

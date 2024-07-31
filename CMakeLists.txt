@@ -32,6 +32,9 @@ set(HEADERS
     src/LOBSide.hpp
     src/Exchange.hpp
     src/Side.hpp
+    src/OrderData.h
+    src/OrderType.h
+    src/OrderIdSequence.h
 )
 
 # Check that all source files exist
@@ -49,7 +52,10 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCES} ${HEADERS})
 
 # Define an executable for the test suite
 add_executable(exchange_test
-    Tests/test.cpp
+    tests/LimitOrderTests.cpp
+    tests/MarketOrderTests.cpp
+    tests/ExchangeTest.cpp
+    tests/main.cpp
 )
 
 # Link libraries to your test executable

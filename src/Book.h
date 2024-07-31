@@ -33,7 +33,7 @@
 
 /**
  * @class Book
- * @brief represents an order book that manages buy and sell orders.
+ * @brief Represents an order book that manages buy and sell orders, allowing for placing, canceling, and modifying orders.
  */
 class Book {
     
@@ -41,19 +41,23 @@ public:
     Book();
 
     // functions for adding limit orders to the book
-    void addOrderToBook(bool orderSide, int orderVolume, float floatLimitPrice);
+    void addOrderToBook(OrderData orderData, OrderIdSequence& orderIdSequence);
 
     // placing market orders
-    void placeMarketOrder(int volume, bool orderSide);
+    void placeMarketOrder(int volume, Side orderSide);
 
     // canceling orders
     void removeOrderFromLimit(Order* orderToCancel);
     void cancelOrder(int64_t orderId);
 
     // modify order parameters
-    void modifyOrderLimitPrice(int64_t orderId, float newLimitPrice);
+    void modifyOrderLimitPrice(int64_t orderId, float newLimitPrice, OrderIdSequence& orderIdSequence);
     void modifyOrderSize(int64_t orderId, int newSize);
-
+    
+    // modify allOrders map
+    void addOrderToAllOrders(std::unique_ptr<Order> order);
+    void removeOrderFromAllOrders(int64_t orderId);
+    
     // getters
     LOBSide<Side::Sell>* getSellSide() const;
     LOBSide<Side::Buy>* getBuySide() const;
@@ -69,4 +73,5 @@ private:
 
     Book& operator=(const Book&) = delete;
     Book(const Book&) = delete;
+
 };

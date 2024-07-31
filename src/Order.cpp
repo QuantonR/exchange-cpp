@@ -1,35 +1,22 @@
 #include "Order.h"
 
-int64_t Order::globalOrderId = 0;
-
 /**
  * @brief Constructs a new Order.
- * @param orderType Type of the order.
- * @param shares Number of shares.
- * @param limit Price limit.
- * @param entryTime Time of entry.
- * @param parentLimit Pointer to the parent limit.
+ * @param orderData The data associated with the order, including type, side, size, limit price, and timestamps.
+ * @param parentLimit Pointer to the parent limit where this order resides.
+ * @param idSequence Reference to the OrderIdSequence for generating a unique order ID.
  */
-Order::Order(Side orderType, int shares, int limit, int entryTime, Limit* parentLimit)
-    : orderType(orderType), shares(shares), limit(limit),
-      entryTime(entryTime), parentLimit(parentLimit), eventTime(entryTime), nextOrder(nullptr), prevOrder(nullptr) {
+Order::Order(const OrderData& orderData, Limit* parentLimit, OrderIdSequence& idSequence)
+    : orderData(orderData), parentLimit(parentLimit), nextOrder(nullptr), prevOrder(nullptr) {
           
-    if (limit <= 0) {
+    if (orderData.limit <= 0) {
         throw std::invalid_argument("The price must be positive");
     }
-    if (shares <= 0) {
+    if (orderData.shares <= 0) {
         throw std::invalid_argument("The order size must be positive");
     }
 
-    orderId = updateId();
-}
-
-/**
- * @brief Updates the global order ID.
- * @return New order ID.
- */
-int64_t Order::updateId() {
-    return globalOrderId++;
+    orderId = idSequence.getNextId();
 }
 
 /**
@@ -53,7 +40,7 @@ void Order::setPrevOrder(Order* prevOrder) {
  * @param shares Number of shares.
  */
 void Order::setShares(const int shares) {
-    this->shares = shares;
+    orderData.shares = shares;
 }
 
 /**
@@ -61,15 +48,15 @@ void Order::setShares(const int shares) {
  * @return Price limit.
  */
 int Order::getLimit() const {
-    return limit;
+    return orderData.limit.value();
 }
 
 /**
- * @brief Returns the type of the order.
- * @return Order type (buy or sell).
+ * @brief Returns the side of the order (buy or sell).
+ * @return Order side.
  */
-Side Order::getOrderType() const {
-    return orderType;
+Side Order::getOrderSide() const {
+    return orderData.orderSide;
 }
 
 /**
@@ -101,7 +88,7 @@ Limit* Order::getParentLimit() const {
  * @return Entry time.
  */
 int Order::getEntryTime() const {
-    return entryTime;
+    return orderData.entryTime;
 }
 
 /**
@@ -109,7 +96,7 @@ int Order::getEntryTime() const {
  * @return Event time.
  */
 int Order::getEventTime() const {
-    return eventTime;
+    return orderData.eventTime;
 }
 
 /**
@@ -117,7 +104,15 @@ int Order::getEventTime() const {
  * @return Number of shares.
  */
 int Order::getShares() const {
-    return shares;
+    return orderData.shares;
+}
+
+/**
+ * @brief Returns the type of the order.
+ * @return The type of the order (Limit or Market).
+ */
+OrderType Order::getOrderType() const {
+    return orderData.orderType;
 }
 
 /**
@@ -126,11 +121,4 @@ int Order::getShares() const {
  */
 int64_t Order::getOrderId() const {
     return orderId;
-}
-
-/**
- * @brief Resets the global order ID.
- */
-void Order::resetGlobalOrderId() {
-    globalOrderId = 0;
 }
