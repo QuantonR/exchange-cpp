@@ -24,50 +24,20 @@
 
 #pragma once
 
-#include <stdexcept>
-#include "Limit.h"
-#include "OrderData.h"
-#include "OrderIdSequence.h"
-#include "Side.hpp"
-
-// Forward declaration of Limit
-class Limit;
-class OrderIdSqeuence;
-struct OrderData;
-
+#include <atomic>
 
 /**
- * @class Order
- * @brief Represents an individual order in the order book, containing details like order type, limit price, shares, and its position in the order list.
+ * @class OrderIdSequence
+ * @brief Manages the sequence of order IDs.
  */
-class Order {
+class OrderIdSequence {
 public:
-    Order(const OrderData& orderData, Limit* parentLimit, OrderIdSequence& idSequence);
+    OrderIdSequence() : currentId(0) {}
 
-    Order& operator=(const Order&) = delete;
-    Order(const Order&) = delete;
-
-    // getters
-    int getLimit() const;
-    Side getOrderSide() const;
-    Order* getNextOrder() const;
-    Order* getPrevOrder() const;
-    Limit* getParentLimit() const;
-    int getEntryTime() const;
-    int getEventTime() const;
-    int getShares() const;
-    int64_t getOrderId() const;
-    OrderType getOrderType() const;
-    
-    // setters
-    void setNextOrder(Order* nextOrder);
-    void setPrevOrder(Order* prevOrder);
-    void setShares(const int shares);
+    int64_t getNextId() {
+        return currentId.fetch_add(1, std::memory_order_relaxed);
+    }
 
 private:
-    int64_t orderId;
-    OrderData orderData;
-    Order* nextOrder;
-    Order* prevOrder;
-    Limit* parentLimit;
+    std::atomic<int64_t> currentId;
 };

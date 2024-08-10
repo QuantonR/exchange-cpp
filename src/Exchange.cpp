@@ -1,29 +1,32 @@
 #include "Exchange.hpp"
 
+/**
+ * @brief Constructs a new Exchange with a specified name.
+ * @param exchangeName The name of the exchange.
+ */
 Exchange::Exchange(const std::string& exchangeName) : exchangeName(exchangeName) {}
 
 /**
- * @brief Adds an order to the order book of a specific ticker.
- * @param ticker The ticker symbol of the stock.
- * @param orderSide The side of the order (true for buy, false for sell).
- * @param orderVolume The volume of the order.
- * @param orderType The type of the order (limit or market).
- * @param floatLimitPrice The limit price of the order (optional, only for limit orders).
+ * @brief Adds an order to the order book of a specific ticker. Supports both limit and market orders.
+ * @param ticker The ticker symbol of the instrument.
+ * @param orderData Reference to the order data containing the order details.
+ * @throws std::invalid_argument if a limit price is not provided for limit orders and std::runtime_error if the instrument is not available on the exchange.
  */
-void Exchange::addOrder(const std::string& ticker, bool orderSide, int orderVolume, OrderType orderType, std::optional<float> floatLimitPrice) {
+void Exchange::addOrder(const std::string& ticker, OrderData& orderData) {
     
     Book* instrumentBook = getOrderBook(ticker);
+    assert(instrumentBook != nullptr);
     
     if (instrumentBook){
-        if (orderType == OrderType::GoodTillCancel){
-            if (!floatLimitPrice.has_value()) {
+        if (orderData.orderType == OrderType::Limit){
+            if (!orderData.limit.has_value()) {
                 throw std::invalid_argument("Limit price must be provided for limit orders.");
             }
             
-            instrumentBook->addOrderToBook(orderSide, orderVolume, floatLimitPrice.value());
-        } else if (orderType == OrderType::Market){
+            instrumentBook->addOrderToBook(orderData, globalOrderId);
+        } else if (orderData.orderType == OrderType::Market){
             
-            instrumentBook->placeMarketOrder(orderVolume, orderSide);
+            instrumentBook->placeMarketOrder(orderData.shares, orderData.orderSide);
         }
     } else {
         throw std::runtime_error("Can't add order to Exchange. The insturment is not covered by the exchange.");
@@ -39,7 +42,8 @@ void Exchange::addOrder(const std::string& ticker, bool orderSide, int orderVolu
 void Exchange::modifyLimitPrice(const std::string& ticker, int64_t orderId, int newLimitPrice) {
     
     Book* instrumentBook = getOrderBook(ticker);
-    instrumentBook->modifyOrderLimitPrice(orderId, newLimitPrice);
+    assert(instrumentBook != nullptr);
+    instrumentBook->modifyOrderLimitPrice(orderId, newLimitPrice, globalOrderId);
 }
 
 /**
@@ -51,6 +55,7 @@ void Exchange::modifyLimitPrice(const std::string& ticker, int64_t orderId, int 
 void Exchange::modifyOrderSize(const std::string& ticker, int64_t orderId, int newSize) {
     
     Book* instrumentBook = getOrderBook(ticker);
+    assert(instrumentBook != nullptr);
     instrumentBook->modifyOrderSize(orderId, newSize);
 }
 
@@ -87,8 +92,9 @@ std::vector<std::string> Exchange::getTickerList() const {
 }
 
 /**
- * @brief Returns the book given a ticker.
- * @param ticker The ticker symbol of a particular stock.
+ * @brief Retrieves the order book for a specific ticker.
+ * @param ticker The ticker symbol of the instrument.
+ * @return Pointer to the order book associated with the ticker, or nullptr if the ticker is not found.
  */
 Book* Exchange::getOrderBook(const std::string& ticker) const {
     
@@ -100,17 +106,20 @@ Book* Exchange::getOrderBook(const std::string& ticker) const {
 }
 
 /**
- * @brief Returns National Best Bid and Offer for an Instrument
- * @param ticker The ticker symbol of a particular stock.
- * @return A pair containing the best bid and best offer
+ * @brief Retrieves the National Best Bid and Offer (NBBO) for a specific instrument.
+ * @param ticker The ticker symbol of the instrument.
+ * @return A pair of optional integers representing the best bid and best offer prices.
+ *         If either the bid or offer is unavailable, the corresponding optional will be nullopt.
+ * @throws std::invalid_argument if the instrument is not available on the exchange.
  */
 std::pair<std::optional<int>, std::optional<int>> Exchange::getNBBO(const std::string& ticker) const {
     
     Book* instrumentBook = getOrderBook(ticker);
+    assert(instrumentBook != nullptr);
     
     if (instrumentBook == nullptr){
         
-        throw std::invalid_argument("The insturment is not covered by the exchange.");
+        throw std::invalid_argument("The instrument is not covered by the exchange.");
     }
     std::optional<int> bestBid;
     std::optional<int> bestOffer;

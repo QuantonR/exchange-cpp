@@ -24,50 +24,11 @@
 
 #pragma once
 
-#include <stdexcept>
-#include "Limit.h"
-#include "OrderData.h"
-#include "OrderIdSequence.h"
-#include "Side.hpp"
-
-// Forward declaration of Limit
-class Limit;
-class OrderIdSqeuence;
-struct OrderData;
-
-
 /**
- * @class Order
- * @brief Represents an individual order in the order book, containing details like order type, limit price, shares, and its position in the order list.
+ * @enum OrderType
+ * @brief Represents the type of order, either a Limit order or a Market order.
  */
-class Order {
-public:
-    Order(const OrderData& orderData, Limit* parentLimit, OrderIdSequence& idSequence);
-
-    Order& operator=(const Order&) = delete;
-    Order(const Order&) = delete;
-
-    // getters
-    int getLimit() const;
-    Side getOrderSide() const;
-    Order* getNextOrder() const;
-    Order* getPrevOrder() const;
-    Limit* getParentLimit() const;
-    int getEntryTime() const;
-    int getEventTime() const;
-    int getShares() const;
-    int64_t getOrderId() const;
-    OrderType getOrderType() const;
-    
-    // setters
-    void setNextOrder(Order* nextOrder);
-    void setPrevOrder(Order* prevOrder);
-    void setShares(const int shares);
-
-private:
-    int64_t orderId;
-    OrderData orderData;
-    Order* nextOrder;
-    Order* prevOrder;
-    Limit* parentLimit;
+enum class OrderType {
+    Limit,
+    Market
 };

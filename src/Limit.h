@@ -30,19 +30,22 @@
 #include "Order.h"
 #include "Side.hpp"
 
+struct OrderData;
+class Book;
+class OrderIdSequence;
 class Order;
 
 /**
  * @class Limit
- * @brief Represents a price level in the order book.
+ * @brief Represents a price level in the order book, managing orders at that specific price level.
  */
 class Limit {
 public:
     Limit(int limitPrice);
 
-    void addOrderToLimit(Side orderType, int size, int entryTime, std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders);
+    void addOrderToLimit(const OrderData& orderData, Book& book, OrderIdSequence& idSequence);
     void partialFill(int remainingVolume);
-    void fullFill(std::unordered_map<int64_t, std::unique_ptr<Order>>& allOrders);
+    void fullFill(Book& book);
     void decreaseSize();
 
     // getters and setters
