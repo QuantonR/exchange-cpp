@@ -27,10 +27,11 @@
 
 #include <map>
 #include <memory>
+
+#include "Book.h"
 #include "Limit.h"
 #include "Side.hpp"
 
-class Book;
 class Limit;
 
 /**
@@ -44,9 +45,9 @@ public:
     LOBSide(Book& book);
 
     Limit* findLimit(int limitPrice) const;
-    void addOrderToSide(OrderData& orderData, OrderIdSequence& orderIdSequence);
-    void placeMarketOrder(int volume);
-    void executeOrder(int& volume, Limit*& LimitToExecute);
+    void addOrderToSide(OrderData& orderData, uint64_t newOrderId);
+    void placeMarketOrder(OrderData& orderData, uint64_t marketOrderId);
+    void executeOrder(int& volume, Side& takerSide, uint64_t orderId, Limit*& limitToExecute);
     void cancelLimit(Limit* limitToCancel);
 
     LOBSide(const LOBSide&) = delete;
@@ -56,21 +57,17 @@ public:
     Limit* getBestLimit() const;
     int getSideVolume() const;
     const std::map<int, std::unique_ptr<Limit>>& getSideTree() const;
-    
+
 private:
-    /// Stores all limits for this side, mapped by limit price
-    std::map<int, std::unique_ptr<Limit>> sideTree;
-    /// Total volume of orders for this side
-    int sideVolume;
-    /// Pointer to the best limit for this side
-    Limit* bestLimit;
-    
+    std::map<int, std::unique_ptr<Limit>> sideTree;  // Stores all limits for this side, mapped by limit price
+    int sideVolume;  // Total volume of orders for this side
+    Limit* bestLimit;  // Pointer to the best limit for this side
     Book& book;
-    
+
     void updateBestLimit();
-    
     static int getCurrentTimeSeconds();
 };
+
 
 /**
  * @brief Constructor that initializes the side of the order book.
@@ -82,11 +79,10 @@ LOBSide<S>::LOBSide(Book& book) : sideVolume(0), bestLimit(nullptr), book(book) 
 /**
  * @brief Adds an order to the side of the order book.
  * @param orderData Reference to the order data containing the order details.
- * @param orderIdSequence Reference to the OrderIdSequence for generating a unique order ID.
+ * @param newOrderId The unique order ID for this order.
  */
 template<Side S>
-void LOBSide<S>::addOrderToSide(OrderData& orderData, OrderIdSequence& orderIdSequence) {
-    
+void LOBSide<S>::addOrderToSide(OrderData& orderData, uint64_t newOrderId) {
     sideVolume += orderData.shares;
     Limit* limitToAdd = findLimit(orderData.limit.value());
     if (!limitToAdd) {
@@ -96,7 +92,7 @@ void LOBSide<S>::addOrderToSide(OrderData& orderData, OrderIdSequence& orderIdSe
         updateBestLimit();
     }
 
-    limitToAdd->addOrderToLimit(orderData, book, orderIdSequence);
+    limitToAdd->addOrderToLimit(orderData, book, newOrderId);
 }
 
 /**
@@ -106,7 +102,6 @@ void LOBSide<S>::addOrderToSide(OrderData& orderData, OrderIdSequence& orderIdSe
  */
 template<Side S>
 Limit* LOBSide<S>::findLimit(int limitPrice) const {
-    
     auto result = sideTree.find(limitPrice);
     if (result == sideTree.end()) {
         return nullptr;
@@ -121,7 +116,6 @@ Limit* LOBSide<S>::findLimit(int limitPrice) const {
  */
 template<Side S>
 void LOBSide<S>::updateBestLimit() {
-    
     if (sideTree.empty()) {
         bestLimit = nullptr;
     } else {
@@ -135,13 +129,12 @@ void LOBSide<S>::updateBestLimit() {
 
 /**
  * @brief Places a market order, executing it against existing limit orders on the side.
- * @param volume Volume of the market order.
- * @throws std::runtime_error if the market order size is too large to be executed
- *         or if no corresponding orders are available.
+ * @param orderData Reference to the order data containing the order details.
+ * @throws std::runtime_error if the market order size is too large to be executed or if no corresponding orders are available.
  */
 template<Side S>
-void LOBSide<S>::placeMarketOrder(int volume) {
-    if (volume > sideVolume) {
+void LOBSide<S>::placeMarketOrder(OrderData& orderData, uint64_t marketOrderId) {
+    if (orderData.shares > sideVolume) {
         throw std::runtime_error("The market order size is too big and it can't be executed right now.");
     }
 
@@ -151,8 +144,8 @@ void LOBSide<S>::placeMarketOrder(int volume) {
         throw std::runtime_error("No corresponding orders available to match the market order.");
     }
 
-    while (volume > 0 && limitToExecute) {
-        executeOrder(volume, limitToExecute);
+    while (orderData.shares > 0 && limitToExecute) {
+        executeOrder(orderData.shares, orderData.orderSide, marketOrderId, limitToExecute);
     }
 }
 
@@ -162,18 +155,10 @@ void LOBSide<S>::placeMarketOrder(int volume) {
  * @param limitToExecute Pointer to the limit to execute against.
  */
 template<Side S>
-void LOBSide<S>::executeOrder(int& volume, Limit*& limitToExecute) {
-    const int limitVolume = limitToExecute->getTotalVolume();
-    if (limitVolume > volume) {
-        limitToExecute->partialFill(volume);
-        sideVolume -= volume;
-        volume = 0;
-    } else {
-        int orderVolume = limitVolume;
-        limitToExecute->fullFill(book);
-        volume -= orderVolume;
-        sideVolume -= orderVolume;
-
+void LOBSide<S>::executeOrder(int& volume, Side& takerSide, uint64_t orderId, Limit*& limitToExecute) {
+    sideVolume -= volume;
+    limitToExecute->processFill(volume, takerSide, orderId, book);
+    if (limitToExecute -> getSize() == 0) {
         cancelLimit(limitToExecute);
         limitToExecute = bestLimit;
     }

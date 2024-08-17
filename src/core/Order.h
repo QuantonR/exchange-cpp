@@ -24,51 +24,45 @@
 
 #pragma once
 
-#include <vector>
-#include <unordered_map>
-#include <memory>
-#include "Order.h"
+#include <stdexcept>
+#include "OrderData.h"
 #include "Side.hpp"
 
+// Forward declaration of Limit
+class Limit;
 struct OrderData;
-class Book;
-class OrderIdSequence;
-class Order;
 
 /**
- * @class Limit
- * @brief Represents a price level in the order book, managing orders at that specific price level.
+ * @class Order
+ * @brief Represents an individual order in the order book, containing details like order type, limit price, shares, and its position in the order list.
  */
-class Limit {
+class Order {
 public:
-    Limit(int limitPrice);
+    Order(const OrderData& orderData, Limit* parentLimit, uint64_t newOrderId);
 
-    void addOrderToLimit(const OrderData& orderData, Book& book, OrderIdSequence& idSequence);
-    void partialFill(int remainingVolume);
-    void fullFill(Book& book);
-    void decreaseSize();
+    Order& operator=(const Order&) = delete;
+    Order(const Order&) = delete;
 
-    // getters and setters
-    int getLimitPrice() const;
-    int getSize() const;
-    int getTotalVolume() const;
-
-    Order* getHeadOrder() const;
-    Order* getTailOrder() const;
-
-    void setTotalVolume(const int& newVolume);
-    void setTailOrder(Order* newTailOrder);
-    void setHeadOrder(Order* newHeadOrder);
+    // getters
+    int getLimit() const;
+    int getClientId() const;
+    Side getOrderSide() const;
+    Order* getNextOrder() const;
+    Order* getPrevOrder() const;
+    Limit* getParentLimit() const;
+    int getShares() const;
+    int64_t getOrderId() const;
+    OrderType getOrderType() const;
     
+    // setters
+    void setNextOrder(Order* nextOrder);
+    void setPrevOrder(Order* prevOrder);
+    void setShares(const int shares);
+
 private:
-    /// Price level of this limit
-    const int limitPrice;
-    /// Number of orders at this price level
-    int size;
-    /// Total volume of shares at this price level
-    int totalVolume;
-    /// Pointer to the first order in the doubly  linked list at this price level
-    Order* headOrder;
-    /// Pointer to the last order in the doubly linked list at this price level
-    Order* tailOrder;
+    int64_t orderId;
+    OrderData orderData;
+    Order* nextOrder;
+    Order* prevOrder;
+    Limit* parentLimit;
 };

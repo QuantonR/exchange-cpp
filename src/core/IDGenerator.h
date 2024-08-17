@@ -27,17 +27,22 @@
 #include <atomic>
 
 /**
- * @class OrderIdSequence
- * @brief Manages the sequence of order IDs.
+ * @class IDGenerator
+ * @brief Manages the sequence of order IDs and executions IDs.
  */
-class OrderIdSequence {
+class IDGenerator {
 public:
-    OrderIdSequence() : currentId(0) {}
+    IDGenerator() : currentOrderId(0), currentExecutionId(0) {}
 
-    int64_t getNextId() {
-        return currentId.fetch_add(1, std::memory_order_relaxed);
+    uint64_t getNextOrderId() {
+        return currentOrderId.fetch_add(1, std::memory_order_relaxed);
+    }
+    
+    uint64_t getNextExecutionId() {
+        return currentExecutionId.fetch_add(1, std::memory_order_relaxed);
     }
 
 private:
-    std::atomic<int64_t> currentId;
+    std::atomic<uint64_t> currentOrderId;
+    std::atomic<uint64_t> currentExecutionId;
 };

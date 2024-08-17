@@ -22,13 +22,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#ifndef BOOK_H
+#define BOOK_H
 
-#include <cmath>
-#include <chrono>
 #include <unordered_map>
+#include <queue>
 #include <memory>
+
 #include "LOBSide.hpp"
+
+class Exchange;
 
 /**
  * @class Book
@@ -37,30 +40,37 @@
 class Book {
     
 public:
-    Book();
+    Book(Exchange& exchange);
 
     // functions for adding limit orders to the book
-    void addOrderToBook(OrderData orderData, OrderIdSequence& orderIdSequence);
+    void addOrderToBook(OrderData orderData);
 
     // placing market orders
-    void placeMarketOrder(int volume, Side orderSide);
+    void placeMarketOrder(OrderData& orderData);
 
     // canceling orders
     void removeOrderFromLimit(Order* orderToCancel);
     void cancelOrder(int64_t orderId);
 
     // modify order parameters
-    void modifyOrderLimitPrice(int64_t orderId, float newLimitPrice, OrderIdSequence& orderIdSequence);
+    void modifyOrderLimitPrice(int64_t orderId, float newLimitPrice);
     void modifyOrderSize(int64_t orderId, int newSize);
     
     // modify allOrders map
     void addOrderToAllOrders(std::unique_ptr<Order> order);
     void removeOrderFromAllOrders(int64_t orderId);
     
+    // Executions methods
+    void addExecutionToQueue(std::unique_ptr<Execution> execution);
+    std::unique_ptr<Execution> popNextExecution();
+
+    uint64_t getNextOrderId();
+    uint64_t getNextExecutionId();
+    
     // getters
     LOBSide<Side::Sell>* getSellSide() const;
     LOBSide<Side::Buy>* getBuySide() const;
-    const std::unordered_map<int64_t, std::unique_ptr<Order>>* getAllOrders() const;
+    const std::unordered_map<uint64_t, std::unique_ptr<Order>>* getAllOrders() const;
     
 private:
     /// the sell side of the order book
@@ -68,9 +78,14 @@ private:
     /// the buy side of the order book
     std::unique_ptr<LOBSide<Side::Buy>> buySide;
     /// a map of all orders in the order book
-    std::unordered_map<int64_t, std::unique_ptr<Order>> allOrders;
+    std::unordered_map<uint64_t, std::unique_ptr<Order>> allOrders;
+    /// a map of all the executions in the book
+    std::queue<std::unique_ptr<Execution>> executionsQueue;
+    
+    Exchange& exchange;
 
     Book& operator=(const Book&) = delete;
     Book(const Book&) = delete;
-
 };
+
+#endif // BOOK_H

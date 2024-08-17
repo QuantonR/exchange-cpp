@@ -27,13 +27,17 @@
 #ifndef Exchange_hpp
 #define Exchange_hpp
 
-#include "Book.h"
 #include <cassert>
 #include <utility>
 #include <optional>
 #include <vector>
 #include <unordered_map>
 #include <string>
+
+#include "IDGenerator.h"
+
+class Book;
+class OrderData;
 
 /**
  * @class Exchange
@@ -45,6 +49,7 @@ public:
     Exchange(const std::string& exchangeName);
     
     void addOrder(const std::string& ticker, OrderData& orderData);
+    void cancelOrder(const std::string& ticker, int64_t orderId);
     
     void modifyLimitPrice(const std::string& ticker, int64_t orderId, int newLimitPrice);
     void modifyOrderSize(const std::string& ticker, int64_t orderId, int newSize);
@@ -56,17 +61,21 @@ public:
     std::vector<std::string> getTickerList() const;
     std::pair<std::optional<int>, std::optional<int>> getNBBO(const std::string& ticker) const;
     
+    // IDs getters
+    uint64_t getNextOrderId();
+    uint64_t getNextExecutionId();
+        
     // Deleted copy constructor and assignment operator to prevent copying
     Exchange(const Exchange&) = delete;
     Exchange& operator=(const Exchange&) = delete;
-    
+        
 private:
-    /// a map of ticker symbols to their respective order books
+    /// a map of ticker symbols to their respective order booaks
     std::unordered_map<std::string, std::unique_ptr<Book>> tickerLob;
     /// the name of the exchange
     std::string exchangeName;
-    /// Order ID sequence generator
-    OrderIdSequence globalOrderId;
+    /// Order and Execution ID sequence generator
+    IDGenerator globalIdSequence;
 };
 
 #endif /* Exchange_hpp */

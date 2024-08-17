@@ -29,13 +29,6 @@
 #include "OrderType.h"
 #include "Side.hpp"
 
-/**
- * @brief Gets the current time in seconds.
- * @return Current time in seconds.
- */
-inline int getCurrentTimeSeconds() {
-    return static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-}
 
 /**
  * @struct OrderData
@@ -45,17 +38,18 @@ struct OrderData {
     Side orderSide;
     OrderType orderType;
     int shares;
+    int clientId;
     std::optional<int> limit; // limit is an optional field (market orders)
-    int entryTime;
-    int eventTime;
-
+    std::chrono::system_clock::time_point entryTime;
+    std::chrono::system_clock::time_point eventTime;
+    
     // Constructor where limit is provided
-    OrderData(Side orderSide, int shares, float limit, OrderType orderType)
+    OrderData(Side orderSide, int shares, int clientId, float limit, OrderType orderType)
         : orderSide(orderSide), shares(shares), limit(static_cast<int>(std::round(limit * 100))), orderType(orderType),
-          entryTime(getCurrentTimeSeconds()), eventTime(getCurrentTimeSeconds()) {}
+          entryTime(std::chrono::system_clock::now()), eventTime(std::chrono::system_clock::now()) {}
 
     // Constructor where limit is omitted
-    OrderData(Side orderSide, int shares, OrderType orderType)
-        : orderSide(orderSide), shares(shares), limit(std::nullopt), orderType(orderType),
-          entryTime(getCurrentTimeSeconds()), eventTime(getCurrentTimeSeconds()) {}
+    OrderData(Side orderSide, int shares, int clientId, OrderType orderType)
+        : orderSide(orderSide), shares(shares), clientId(clientId), limit(std::nullopt), orderType(orderType),
+          entryTime(std::chrono::system_clock::now()), eventTime(std::chrono::system_clock::now()) {}
 };

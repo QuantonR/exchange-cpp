@@ -1,20 +1,21 @@
 #include "Book.h"
+#include "Exchange.hpp"
+#include "LOBSide.hpp"
 
 /**
  * @brief Constructor that initializes the buy and sell sides of the order book.
  */
-Book::Book() : sellSide(std::make_unique<LOBSide<Side::Sell>>(*this)), buySide(std::make_unique<LOBSide<Side::Buy>>(*this)) {}
+Book::Book(Exchange& exchange) : exchange(exchange), sellSide(std::make_unique<LOBSide<Side::Sell>>(*this)), buySide(std::make_unique<LOBSide<Side::Buy>>(*this)) {}
 
 /**
  * @brief Template function to add an order to the correct side of the order book.
  * @tparam S The side of the order (buy or sell).
  * @param side Reference to the side of the order book.
  * @param orderData Reference to the order data containing the order details.
- * @param orderIdSequence Reference to the OrderIdSequence for generating a unique order ID.
  */
 template<Side S>
-void addOrderToSide(LOBSide<S>& side, OrderData orderData, OrderIdSequence& orderIdSequence) {
-    side.addOrderToSide(orderData, orderIdSequence);
+void addOrderToSide(LOBSide<S>& side, OrderData& orderData, uint64_t newOrderId) {
+    side.addOrderToSide(orderData, newOrderId);
 }
 
 /**
@@ -24,35 +25,37 @@ void addOrderToSide(LOBSide<S>& side, OrderData orderData, OrderIdSequence& orde
  * @param volume Volume of the market order.
  */
 template<Side S>
-void placeMktOrder(LOBSide<S>& side, int volume) {
-    side.placeMarketOrder(volume);
+void placeMktOrder(LOBSide<S>& side, OrderData& orderData, uint64_t marketOrderId) {
+    side.placeMarketOrder(orderData, marketOrderId);
 }
 
 /**
  * @brief Adds an order to the order book, placing it on the correct side and executing against opposing orders if necessary.
  * @param orderData Reference to the order data containing the order details.
- * @param orderIdSequence Reference to the OrderIdSequence for generating a unique order ID.
  */
-void Book::addOrderToBook(OrderData orderData, OrderIdSequence& orderIdSequence) {
+void Book::addOrderToBook(OrderData orderData) {
     
     Limit* bestLimitOppositeSide = (orderData.orderSide == Side::Buy) ? sellSide->getBestLimit() : buySide->getBestLimit();
+    
+    uint64_t newOrderId = getNextOrderId();
 
     // Check if the new limit order crosses the spread. If so, start executing the order until it stops crossing the spread
     while (bestLimitOppositeSide &&
            ((orderData.orderSide == Side::Buy && sellSide && sellSide->getBestLimit() && orderData.limit > sellSide->getBestLimit()->getLimitPrice()) ||
             (orderData.orderSide == Side::Sell && buySide && buySide->getBestLimit() && orderData.limit < buySide->getBestLimit()->getLimitPrice()))) {
         if (orderData.orderSide == Side::Buy) {
-            sellSide->executeOrder(orderData.shares, bestLimitOppositeSide);
+            // TODO: Fix the fact that every execution we get a new order: it should be always the same order id
+            sellSide->executeOrder(orderData.shares, orderData.orderSide, newOrderId, bestLimitOppositeSide);
         } else {
-            buySide->executeOrder(orderData.shares, bestLimitOppositeSide);
+            buySide->executeOrder(orderData.shares, orderData.orderSide, newOrderId, bestLimitOppositeSide);
         }
         if (!orderData.shares) return; // Exit the loop if the order volume is completely executed
     }
 
     if (orderData.orderSide == Side::Buy) {
-        addOrderToSide(*buySide, orderData, orderIdSequence);
+        addOrderToSide(*buySide, orderData, newOrderId);
     } else {
-        addOrderToSide(*sellSide, orderData, orderIdSequence);
+        addOrderToSide(*sellSide, orderData, newOrderId);
     }
 }
 
@@ -65,16 +68,39 @@ void Book::addOrderToAllOrders(std::unique_ptr<Order> order) {
 }
 
 /**
+ * @brief Adds an execution to the execution queue.
+ * @param execution A unique_ptr to the Execution object to be added to the queue.
+ */
+void Book::addExecutionToQueue(std::unique_ptr<Execution> execution){
+    executionsQueue.push(std::move(execution));
+}
+
+/**
+ * @brief Retrieves and removes the next execution from the execution queue.
+ * @return A unique_ptr to the next Execution object in the queue, or nullptr if the queue is empty.
+ */
+std::unique_ptr<Execution> Book::popNextExecution() {
+    if (executionsQueue.empty()) {
+        return nullptr; // or throw an exception, depending on your needs
+    }
+
+    auto nextExecution = std::move(executionsQueue.front());
+    executionsQueue.pop();
+    return nextExecution;
+}
+
+/**
  * @brief Places a market order, executing it against the existing limit orders on the opposing side.
  * @param volume Volume of the market order.
  * @param orderSide The side of the market order (buy or sell).
  */
-void Book::placeMarketOrder(const int volume, Side orderSide) {
+void Book::placeMarketOrder(OrderData& orderData) {
     
-    if (orderSide == Side::Buy) {
-        placeMktOrder(*sellSide, volume);
+    uint64_t newOrderId = getNextOrderId();
+    if (orderData.orderSide == Side::Buy) {
+        placeMktOrder(*sellSide, orderData, newOrderId);
     } else {
-        placeMktOrder(*buySide, volume);
+        placeMktOrder(*buySide, orderData, newOrderId);
     }
 }
 
@@ -150,10 +176,9 @@ void Book::cancelOrder(int64_t orderId) {
  * @brief Modifies the limit price of an order by canceling it and re-adding it with the new price.
  * @param orderId ID of the order to be modified.
  * @param newLimitPrice The new limit price for the order.
- * @param orderIdSequence Reference to the OrderIdSequence for generating a new unique order ID.
  * @throws std::invalid_argument if the order ID is not found in the book.
  */
-void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice, OrderIdSequence& orderIdSequence) {
+void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice) {
     
     auto it = allOrders.find(orderId);
     if (it == allOrders.end()) {
@@ -163,13 +188,13 @@ void Book::modifyOrderLimitPrice(int64_t orderId, float newLimitPrice, OrderIdSe
     // Access order safely
     auto orderToModify = it->second.get();
 
-    OrderData modifiedOrderData = OrderData(orderToModify->getOrderSide(), orderToModify->getShares(), newLimitPrice, orderToModify->getOrderType());
+    OrderData modifiedOrderData = OrderData(orderToModify->getOrderSide(), orderToModify->getShares(), orderToModify->getClientId(), newLimitPrice, orderToModify->getOrderType());
     
     // Cancel the order and ensure it does not leave a dangling pointer
     removeOrderFromLimit(orderToModify);
     
     // Add the modified order back to the book
-    addOrderToBook(modifiedOrderData, orderIdSequence);
+    addOrderToBook(modifiedOrderData);
 }
 
 /**
@@ -211,6 +236,14 @@ LOBSide<Side::Buy>* Book::getBuySide() const {
  * @brief Returns all orders in the order book.
  * @return Pointer to the unordered map containing all orders.
  */
-const std::unordered_map<int64_t, std::unique_ptr<Order>>* Book::getAllOrders() const {
+const std::unordered_map<uint64_t, std::unique_ptr<Order>>* Book::getAllOrders() const {
     return &allOrders;
+}
+
+uint64_t Book::getNextOrderId() {
+    return exchange.getNextOrderId();
+}
+
+uint64_t Book::getNextExecutionId() {
+    return exchange.getNextExecutionId();
 }

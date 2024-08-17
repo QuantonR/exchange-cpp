@@ -1,4 +1,5 @@
 #include "Exchange.hpp"
+#include "Book.h"
 
 /**
  * @brief Constructs a new Exchange with a specified name.
@@ -10,27 +11,35 @@ Exchange::Exchange(const std::string& exchangeName) : exchangeName(exchangeName)
  * @brief Adds an order to the order book of a specific ticker. Supports both limit and market orders.
  * @param ticker The ticker symbol of the instrument.
  * @param orderData Reference to the order data containing the order details.
- * @throws std::invalid_argument if a limit price is not provided for limit orders and std::runtime_error if the instrument is not available on the exchange.
+ * @throws std::invalid_argument if a limit price is not provided for limit orders
  */
 void Exchange::addOrder(const std::string& ticker, OrderData& orderData) {
     
     Book* instrumentBook = getOrderBook(ticker);
     assert(instrumentBook != nullptr);
     
-    if (instrumentBook){
-        if (orderData.orderType == OrderType::Limit){
-            if (!orderData.limit.has_value()) {
-                throw std::invalid_argument("Limit price must be provided for limit orders.");
-            }
-            
-            instrumentBook->addOrderToBook(orderData, globalOrderId);
-        } else if (orderData.orderType == OrderType::Market){
-            
-            instrumentBook->placeMarketOrder(orderData.shares, orderData.orderSide);
+    if (orderData.orderType == OrderType::Limit){
+        if (!orderData.limit.has_value()) {
+            throw std::invalid_argument("Limit price must be provided for limit orders.");
         }
-    } else {
-        throw std::runtime_error("Can't add order to Exchange. The insturment is not covered by the exchange.");
+        
+        instrumentBook->addOrderToBook(orderData);
+    } else if (orderData.orderType == OrderType::Market){
+        
+        instrumentBook->placeMarketOrder(orderData);
     }
+}
+
+/**
+ * @brief Cancel an order to the order book of a specific ticker..
+ * @param ticker The ticker symbol of the instrument.
+ * @param orderId The id of the order to cancel
+ */
+void Exchange::cancelOrder(const std::string& ticker, int64_t orderId){
+    
+    Book* instrumentBook = getOrderBook(ticker);
+    assert(instrumentBook != nullptr);
+    instrumentBook->cancelOrder(orderId);
 }
 
 /**
@@ -43,7 +52,7 @@ void Exchange::modifyLimitPrice(const std::string& ticker, int64_t orderId, int 
     
     Book* instrumentBook = getOrderBook(ticker);
     assert(instrumentBook != nullptr);
-    instrumentBook->modifyOrderLimitPrice(orderId, newLimitPrice, globalOrderId);
+    instrumentBook->modifyOrderLimitPrice(orderId, newLimitPrice);
 }
 
 /**
@@ -65,7 +74,7 @@ void Exchange::modifyOrderSize(const std::string& ticker, int64_t orderId, int n
  */
 void Exchange::addInstrument(const std::string& newTicker) {
     
-    tickerLob.emplace(newTicker, std::make_unique<Book>());
+    tickerLob.emplace(newTicker, std::make_unique<Book>(*this));
 }
 
 /**
@@ -137,4 +146,12 @@ std::pair<std::optional<int>, std::optional<int>> Exchange::getNBBO(const std::s
     }
 
     return {bestBid, bestOffer};
+}
+
+uint64_t Exchange::getNextOrderId() {
+    return globalIdSequence.getNextOrderId();
+}
+
+uint64_t Exchange::getNextExecutionId() {
+    return globalIdSequence.getNextExecutionId();
 }
