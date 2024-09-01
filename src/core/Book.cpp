@@ -5,7 +5,7 @@
 /**
  * @brief Constructor that initializes the buy and sell sides of the order book.
  */
-Book::Book(Exchange& exchange) : exchange(exchange), sellSide(std::make_unique<LOBSide<Side::Sell>>(*this)), buySide(std::make_unique<LOBSide<Side::Buy>>(*this)) {}
+Book::Book(Exchange& exchange, std::string symbol) : exchange(exchange), symbol(symbol), sellSide(std::make_unique<LOBSide<Side::Sell>>(*this)), buySide(std::make_unique<LOBSide<Side::Buy>>(*this)) {}
 
 /**
  * @brief Template function to add an order to the correct side of the order book.
@@ -43,11 +43,11 @@ void Book::addOrderToBook(OrderData orderData) {
     while (bestLimitOppositeSide &&
            ((orderData.orderSide == Side::Buy && sellSide && sellSide->getBestLimit() && orderData.limit > sellSide->getBestLimit()->getLimitPrice()) ||
             (orderData.orderSide == Side::Sell && buySide && buySide->getBestLimit() && orderData.limit < buySide->getBestLimit()->getLimitPrice()))) {
+        // TODO: I am having issues with implementign this for orders with the same clientID. I want to loop throught all the limits in the order book in that case and check at the end if it is the same limit price as the min (buy) or max (sell) and if so close the loop
         if (orderData.orderSide == Side::Buy) {
-            // TODO: Fix the fact that every execution we get a new order: it should be always the same order id
-            sellSide->executeOrder(orderData.shares, orderData.orderSide, newOrderId, bestLimitOppositeSide);
+            sellSide->executeOrder(orderData, newOrderId, bestLimitOppositeSide);
         } else {
-            buySide->executeOrder(orderData.shares, orderData.orderSide, newOrderId, bestLimitOppositeSide);
+            buySide->executeOrder(orderData, newOrderId, bestLimitOppositeSide);
         }
         if (!orderData.shares) return; // Exit the loop if the order volume is completely executed
     }
@@ -72,21 +72,7 @@ void Book::addOrderToAllOrders(std::unique_ptr<Order> order) {
  * @param execution A unique_ptr to the Execution object to be added to the queue.
  */
 void Book::addExecutionToQueue(std::unique_ptr<Execution> execution){
-    executionsQueue.push(std::move(execution));
-}
-
-/**
- * @brief Retrieves and removes the next execution from the execution queue.
- * @return A unique_ptr to the next Execution object in the queue, or nullptr if the queue is empty.
- */
-std::unique_ptr<Execution> Book::popNextExecution() {
-    if (executionsQueue.empty()) {
-        return nullptr; // or throw an exception, depending on your needs
-    }
-
-    auto nextExecution = std::move(executionsQueue.front());
-    executionsQueue.pop();
-    return nextExecution;
+    exchange.addExecutionToQueue(std::move(execution));
 }
 
 /**
@@ -246,4 +232,8 @@ uint64_t Book::getNextOrderId() {
 
 uint64_t Book::getNextExecutionId() {
     return exchange.getNextExecutionId();
+}
+
+std::string Book::getSymbol() const {
+    return symbol;
 }

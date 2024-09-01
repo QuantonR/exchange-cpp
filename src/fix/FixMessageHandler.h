@@ -26,21 +26,24 @@
 #define FIXEXCHANGE_HPP
 
 #include "../core/Exchange.hpp"
+#include "../core/OrderType.h"
+#include "../core/OrderData.h"
 #include <quickfix/Application.h>
 #include <quickfix/Session.h>
 #include <quickfix/MessageCracker.h>
 #include <quickfix/fix42/NewOrderSingle.h>
 #include <quickfix/fix42/ExecutionReport.h>
 #include <quickfix/fix42/OrderCancelRequest.h>
+#include <quickfix/fix42/OrderCancelReplaceRequest.h>
 
 /**
- * @class FixExchange
+ * @class FixMessageHandler
  * @brief FIX application for the exchange that handles incoming FIX messages.
  */
-class FixExchange : public FIX::Application, public FIX::MessageCracker {
+class FixMessageHandler : public FIX::Application, public FIX::MessageCracker {
 
 public:
-    FixExchange(Exchange& exchange) : exchange(exchange) {}
+    FixMessageHandler(Exchange& exchange) : exchange(exchange) {}
 
 protected:
     // Application overloads
@@ -58,9 +61,12 @@ protected:
     // Handle NewOrderSingle messages
     void onMessage(const FIX42::NewOrderSingle& message, const FIX::SessionID& sessionID) override;
 
+    // Handle OrderCancelReplaceRequest messages
+    void onMessage(const FIX42::OrderCancelReplaceRequest& message, const FIX::SessionID& sessionID) override;
+    
     // Handle OrderCancelRequest messages
     void onMessage(const FIX42::OrderCancelRequest& message, const FIX::SessionID& sessionID) override;
-
+    
 private:
     Exchange& exchange;
 };

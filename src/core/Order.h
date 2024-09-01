@@ -51,6 +51,8 @@ public:
     Order* getPrevOrder() const;
     Limit* getParentLimit() const;
     int getShares() const;
+    int getExecutedQuantity() const;
+    int getAvgPrice() const;
     int64_t getOrderId() const;
     OrderType getOrderType() const;
     
@@ -58,6 +60,8 @@ public:
     void setNextOrder(Order* nextOrder);
     void setPrevOrder(Order* prevOrder);
     void setShares(const int shares);
+    void setExecutedQuantity(int executedQuantity);
+    void setAvgPrice(int avgPrice);
 
 private:
     int64_t orderId;

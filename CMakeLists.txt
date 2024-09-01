@@ -45,13 +45,15 @@ set(CORE_HEADERS
 # Define the list of FIX-related source and header files
 set(FIX_SOURCES
     src/fix/FixMessageHandler.cpp
-    src/fix/ExchangeMain.cpp
     src/fix/ExecutionManager.cpp
+    src/fix/FixClient.cpp
 )
 
 set(FIX_HEADERS
     src/fix/FixMessageHandler.h
     src/fix/ExecutionManager.h
+    src/fix/FixClient.h
+    src/fix/ExchangeRunner.h
 )
 
 # Create the core library target
@@ -63,6 +65,18 @@ add_library(exchange_fix STATIC ${FIX_SOURCES} ${FIX_HEADERS})
 # Link the QuickFIX library to the FIX components
 target_link_libraries(exchange_fix PRIVATE quickfix)
 
+# Define the main executable (exchange main application)
+add_executable(fix_main
+    src/fix/ExchangeMain.cpp
+)
+
+# Link libraries to the main executable
+target_link_libraries(fix_main PRIVATE
+    exchange_core
+    exchange_fix
+    quickfix
+)
+
 # Define the test executable
 add_executable(exchange_test
     tests/core/LimitOrderTests.cpp
@@ -71,6 +85,7 @@ add_executable(exchange_test
     tests/core/MarketOrderTests.cpp
     tests/core/ExchangeTest.cpp
     tests/core/main.cpp
+    tests/fix/FixTests.cpp
 )
 
 # Link libraries to your test executable
@@ -79,19 +94,16 @@ target_link_libraries(exchange_test PRIVATE
     exchange_fix
     gtest
     gtest_main
-)
-
-# Define the benchmark executable
-add_executable(fix_main
-    src/fix/ExchangeMain.cpp
-)
-
-# Link libraries to your benchmark executable
-target_link_libraries(fix_main PRIVATE
-    exchange_core
-    exchange_fix
     quickfix
 )
+
+# Copy exchangeConfig.cfg to the output directory
+configure_file(${CMAKE_SOURCE_DIR}/src/fix/exchangeConfig.cfg ${CMAKE_BINARY_DIR}/exchangeConfig.cfg COPYONLY)
+
+# Modify fix_main to use the exchangeConfig.cfg
+add_custom_command(TARGET fix_main POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_SOURCE_DIR}/src/fix/exchangeConfig.cfg $<TARGET_FILE_DIR:fix_main>/exchangeConfig.cfg)
 
 # Set properties for the C++ standard for the executables
 set_target_properties(exchange_test fix_main PROPERTIES

@@ -74,7 +74,7 @@ void Exchange::modifyOrderSize(const std::string& ticker, int64_t orderId, int n
  */
 void Exchange::addInstrument(const std::string& newTicker) {
     
-    tickerLob.emplace(newTicker, std::make_unique<Book>(*this));
+    tickerLob.emplace(newTicker, std::make_unique<Book>(*this, newTicker));
 }
 
 /**
@@ -85,7 +85,6 @@ void Exchange::removeInstrument(const std::string& ticker){
     
     tickerLob.erase(ticker);
 }
-
 
 /**
  * @brief Retrieves a list of all tickers currently traded on the exchange.
@@ -148,10 +147,29 @@ std::pair<std::optional<int>, std::optional<int>> Exchange::getNBBO(const std::s
     return {bestBid, bestOffer};
 }
 
+void Exchange::addExecutionToQueue(std::unique_ptr<Execution> execution){
+    executionsQueue.push(std::move(execution));
+}
+
+/**
+ * @brief Retrieves and removes the next execution from the execution queue.
+ * @return A unique_ptr to the next Execution object in the queue, or nullptr if the queue is empty.
+ */
+std::unique_ptr<Execution> Exchange::popNextExecution() {
+    if (executionsQueue.empty()) {
+        return nullptr; // or throw an exception, depending on your needs
+    }
+
+    auto nextExecution = std::move(executionsQueue.front());
+    executionsQueue.pop();
+    return nextExecution;
+}
+
+
 uint64_t Exchange::getNextOrderId() {
-    return globalIdSequence.getNextOrderId();
+    return idGenerator.getNextOrderId();
 }
 
 uint64_t Exchange::getNextExecutionId() {
-    return globalIdSequence.getNextExecutionId();
+    return idGenerator.getNextExecutionId();
 }

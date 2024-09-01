@@ -45,33 +45,37 @@ void Limit::addOrderToLimit(const OrderData& orderData, Book& book, uint64_t new
  * @param orderId The ID of the incoming order that is attempting to take shares.
  * @param book Reference to the order book, used for managing global order and execution lists.
  */
-void Limit::processFill(int& sharesTaker, Side takerSide, uint64_t orderId, Book& book){
+void Limit::processFill(OrderData& takerData, uint64_t orderId, Book& book){
     
     Order* nxtOrder = headOrder;
-    while (nxtOrder != nullptr && size != 0 && sharesTaker != 0) {
+    uint32_t takerClientId = takerData.clientId;
+    Side takerSide = takerData.orderSide;
+    
+    while (nxtOrder != nullptr && size != 0 && takerData.shares != 0) {
         
-        // TODO: Add case where orders client id are the same and we just continue
+        if (takerClientId == nxtOrder->getClientId()) {
+            throw std::runtime_error("Invalid Order: two orders sent from the same client cannot match.");
+        }
         int orderShares = nxtOrder->getShares();
         
-        unsigned int executionVolume = std::min(orderShares, sharesTaker);
-        
-        logExecution(executionVolume, takerSide, orderId, nxtOrder, book, sharesTaker);
+        unsigned int executionVolume = std::min(orderShares, takerData.shares);
 
-        totalVolume -= sharesTaker;
-        if (sharesTaker >= orderShares) {
-            
-            sharesTaker -= orderShares;
+        logExecution(executionVolume, orderId, takerData, nxtOrder, book);
+
+        totalVolume -= executionVolume;
+        
+        if (executionVolume >= orderShares) {
+            takerData.shares -= orderShares;
             decreaseSize();
             nxtOrder = nxtOrder->getNextOrder();
             headOrder = nxtOrder;
-            
         } else {
-            orderShares -= sharesTaker;
-            nxtOrder->setShares(orderShares);
-            sharesTaker = 0;
+            nxtOrder->setShares(orderShares - executionVolume);
+            takerData.shares -= executionVolume;
         }
     }
 }
+
 
 /**
  * @brief Logs the execution of a trade between a taker and a maker order.
@@ -82,22 +86,44 @@ void Limit::processFill(int& sharesTaker, Side takerSide, uint64_t orderId, Book
  * @param book Reference to the order book, used to add the new execution to the execution log.
  * @param remainingTakerShares The remaining shares of the taker order after this execution.
  */
-void Limit::logExecution(int executionVolume, Side& takerSide, uint64_t takerOrderId, Order* makerOrder, Book& book, int takerShares) {
-    int remainingTakerShares = takerShares - executionVolume;
+void Limit::logExecution(int executionVolume, uint64_t takerOrderId, OrderData& takerData, Order* makerOrder, Book& book) {
+    
+    int remainingTakerShares = takerData.shares - executionVolume;
+    int remainingMakerShares = makerOrder->getShares() - executionVolume;
+    
     ExecutionType takerExecutionType = (remainingTakerShares == 0) ? ExecutionType::FullFill : ExecutionType::PartialFill;
     ExecutionType makerExecutionType = (executionVolume == makerOrder->getShares()) ? ExecutionType::FullFill : ExecutionType::PartialFill;
-
+    
+    int makerTotalExecQty = makerOrder->getExecutedQuantity() + executionVolume;
+    int takerTotalExecQty = takerData.executedQuantity + executionVolume;
+    
+    makerOrder->setAvgPrice((makerOrder->getExecutedQuantity() * makerOrder->getAvgPrice() + executionVolume * makerOrder->getLimit()) / makerTotalExecQty);
+    takerData.avgPrice = (takerData.executedQuantity * takerData.avgPrice + executionVolume * makerOrder->getLimit()) / takerTotalExecQty;
+    
+    makerOrder->setExecutedQuantity(makerTotalExecQty);
+    takerData.executedQuantity = takerData.executedQuantity + executionVolume;
+    
     auto execution = std::make_unique<Execution>(
-        book.getNextExecutionId(),                       // IdSequence reference
+        book.getSymbol(),
+        book.getNextExecutionId(),
         makerOrder->getOrderId(),         // makerId (uint64_t)
         takerOrderId,                     // takerId (uint64_t)
         makerOrder->getLimit(),           // execPrice (double)
         executionVolume,                  // execSize (unsigned int)
         makerOrder->getOrderSide(),       // makerSide (Side enum)
-        takerSide,                        // takerSide (Side enum)
-        makerExecutionType,                    // makerExecType (ExecutionType enum)
-        takerExecutionType                     // takerExecType (ExecutionType enum)
+        takerData.orderSide,              // takerSide (Side enum)
+        makerExecutionType,               // makerExecType (ExecutionType enum)
+        takerExecutionType,               // takerExecType (ExecutionType enum)
+        takerData.clientId,
+        makerOrder->getClientId(),
+        makerTotalExecQty,
+        takerTotalExecQty,
+        remainingMakerShares,
+        remainingTakerShares,
+        makerOrder->getAvgPrice(),
+        takerData.avgPrice
     );
+    
     book.addExecutionToQueue(std::move(execution));
 }
 

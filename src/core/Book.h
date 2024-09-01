@@ -28,6 +28,7 @@
 #include <unordered_map>
 #include <queue>
 #include <memory>
+#include <string>
 
 #include "LOBSide.hpp"
 
@@ -40,7 +41,7 @@ class Exchange;
 class Book {
     
 public:
-    Book(Exchange& exchange);
+    Book(Exchange& exchange, std::string symbol);
 
     // functions for adding limit orders to the book
     void addOrderToBook(OrderData orderData);
@@ -62,7 +63,6 @@ public:
     
     // Executions methods
     void addExecutionToQueue(std::unique_ptr<Execution> execution);
-    std::unique_ptr<Execution> popNextExecution();
 
     uint64_t getNextOrderId();
     uint64_t getNextExecutionId();
@@ -71,6 +71,7 @@ public:
     LOBSide<Side::Sell>* getSellSide() const;
     LOBSide<Side::Buy>* getBuySide() const;
     const std::unordered_map<uint64_t, std::unique_ptr<Order>>* getAllOrders() const;
+    std::string getSymbol() const;
     
 private:
     /// the sell side of the order book
@@ -79,10 +80,10 @@ private:
     std::unique_ptr<LOBSide<Side::Buy>> buySide;
     /// a map of all orders in the order book
     std::unordered_map<uint64_t, std::unique_ptr<Order>> allOrders;
-    /// a map of all the executions in the book
-    std::queue<std::unique_ptr<Execution>> executionsQueue;
     
     Exchange& exchange;
+    
+    std::string symbol;
 
     Book& operator=(const Book&) = delete;
     Book(const Book&) = delete;

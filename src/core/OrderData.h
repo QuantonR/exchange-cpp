@@ -38,18 +38,20 @@ struct OrderData {
     Side orderSide;
     OrderType orderType;
     int shares;
-    int clientId;
+    int executedQuantity;
+    int avgPrice;
+    uint32_t clientId;
     std::optional<int> limit; // limit is an optional field (market orders)
     std::chrono::system_clock::time_point entryTime;
     std::chrono::system_clock::time_point eventTime;
     
     // Constructor where limit is provided
-    OrderData(Side orderSide, int shares, int clientId, float limit, OrderType orderType)
+    OrderData(Side orderSide, int shares, uint32_t clientId, float limit, OrderType orderType)
         : orderSide(orderSide), shares(shares), limit(static_cast<int>(std::round(limit * 100))), orderType(orderType),
-          entryTime(std::chrono::system_clock::now()), eventTime(std::chrono::system_clock::now()) {}
+          entryTime(std::chrono::system_clock::now()), eventTime(std::chrono::system_clock::now()), clientId(clientId), executedQuantity(0), avgPrice(0) {}
 
     // Constructor where limit is omitted
-    OrderData(Side orderSide, int shares, int clientId, OrderType orderType)
+    OrderData(Side orderSide, int shares, uint32_t clientId, OrderType orderType)
         : orderSide(orderSide), shares(shares), clientId(clientId), limit(std::nullopt), orderType(orderType),
-          entryTime(std::chrono::system_clock::now()), eventTime(std::chrono::system_clock::now()) {}
+          entryTime(std::chrono::system_clock::now()), eventTime(std::chrono::system_clock::now()) ,executedQuantity(0), avgPrice(0) {}
 };

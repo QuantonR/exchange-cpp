@@ -47,7 +47,7 @@ public:
     Limit* findLimit(int limitPrice) const;
     void addOrderToSide(OrderData& orderData, uint64_t newOrderId);
     void placeMarketOrder(OrderData& orderData, uint64_t marketOrderId);
-    void executeOrder(int& volume, Side& takerSide, uint64_t orderId, Limit*& limitToExecute);
+    void executeOrder(OrderData& orderData, uint64_t orderId, Limit*& limitToExecute);
     void cancelLimit(Limit* limitToCancel);
 
     LOBSide(const LOBSide&) = delete;
@@ -143,9 +143,9 @@ void LOBSide<S>::placeMarketOrder(OrderData& orderData, uint64_t marketOrderId) 
     if (limitToExecute == nullptr) {
         throw std::runtime_error("No corresponding orders available to match the market order.");
     }
-
+    
     while (orderData.shares > 0 && limitToExecute) {
-        executeOrder(orderData.shares, orderData.orderSide, marketOrderId, limitToExecute);
+        executeOrder(orderData, marketOrderId, limitToExecute);
     }
 }
 
@@ -155,9 +155,9 @@ void LOBSide<S>::placeMarketOrder(OrderData& orderData, uint64_t marketOrderId) 
  * @param limitToExecute Pointer to the limit to execute against.
  */
 template<Side S>
-void LOBSide<S>::executeOrder(int& volume, Side& takerSide, uint64_t orderId, Limit*& limitToExecute) {
-    sideVolume -= volume;
-    limitToExecute->processFill(volume, takerSide, orderId, book);
+void LOBSide<S>::executeOrder(OrderData& orderData, uint64_t orderId, Limit*& limitToExecute) {
+    sideVolume -= orderData.shares;
+    limitToExecute->processFill(orderData, orderId, book);
     if (limitToExecute -> getSize() == 0) {
         cancelLimit(limitToExecute);
         limitToExecute = bestLimit;

@@ -35,6 +35,7 @@ enum class ExecutionType {
 };
 
 struct Execution {
+    std::string symbol;
     uint64_t executionId;           // Unique ID for the execution
     uint64_t orderMakerId;          // ID of the maker's order
     uint64_t orderTakerId;          // ID of the taker's order
@@ -45,11 +46,15 @@ struct Execution {
     Side sideTaker;                 // Side of the taker's trade (e.g., "Buy", "Sell")
     ExecutionType makerExecType;    // Type of execution (e.g., "PartialFill", "Fill")
     ExecutionType takerExecType;
+    uint32_t takerClientId;
+    uint32_t makerClientId;
+    int makerExecutedQuantity;
+    int takerExecutedQuantity;
+    int makerOpenQuantity;
+    int takerOpenQuantity;
+    float makerAvgPrice;
+    float takerAvgPrice;
 
-    Execution(uint64_t executionId, uint64_t makerId, uint64_t takerId, int execPrice, unsigned int execSize, Side makerSide, Side takerSide, ExecutionType makerExecType, ExecutionType takerExecType)
-        : executionId(executionId), orderMakerId(makerId), orderTakerId(takerId), executionPrice(static_cast<double>(execPrice) / 100), executionSize(execSize),
-          executionTime(std::chrono::system_clock::now()), sideMaker(makerSide), sideTaker(takerSide), makerExecType(makerExecType), takerExecType(takerExecType) {
-              
-              std::cout << "Successfully matched orders " << orderMakerId << " with " << orderTakerId << "\n";
-          }
+    Execution(std::string symbol, uint64_t executionId, uint64_t makerId, uint64_t takerId, int execPrice, unsigned int execSize, Side makerSide, Side takerSide, ExecutionType makerExecType, ExecutionType takerExecType, uint32_t takerClientId, uint32_t makerClientId, int makerExecutedQuantity, int takerExecutedQuantity, int makerOpenQuantity, int takerOpenQuantity, float makerAvgPrice, float takerAvgPrice)
+        : symbol(symbol), executionId(executionId), orderMakerId(makerId), orderTakerId(takerId), executionPrice(static_cast<double>(execPrice) / 100), executionSize(execSize), executionTime(std::chrono::system_clock::now()), sideMaker(makerSide), sideTaker(takerSide), makerExecType(makerExecType), takerExecType(takerExecType), takerClientId(takerClientId), makerClientId(makerClientId), makerExecutedQuantity(makerExecutedQuantity), takerExecutedQuantity(takerExecutedQuantity), makerOpenQuantity(makerOpenQuantity), takerOpenQuantity(takerOpenQuantity), makerAvgPrice(static_cast<float>(makerAvgPrice) / 100), takerAvgPrice(static_cast<float>(takerAvgPrice) / 100) {}
 };

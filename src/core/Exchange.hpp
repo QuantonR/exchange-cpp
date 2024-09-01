@@ -33,17 +33,18 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <queue>
 
 #include "IDGenerator.h"
+#include "Execution.h"
+#include "Book.h"
 
-class Book;
 class OrderData;
 
 /**
  * @class Exchange
  * @brief Represents an exchange that manages order books for multiple instruments (tickers), allowing for adding, modifying, and removing orders.
  */
-
 class Exchange {
 public:
     Exchange(const std::string& exchangeName);
@@ -61,10 +62,13 @@ public:
     std::vector<std::string> getTickerList() const;
     std::pair<std::optional<int>, std::optional<int>> getNBBO(const std::string& ticker) const;
     
+    void addExecutionToQueue(std::unique_ptr<Execution> execution);
+    std::unique_ptr<Execution> popNextExecution();
+    
     // IDs getters
     uint64_t getNextOrderId();
     uint64_t getNextExecutionId();
-        
+    
     // Deleted copy constructor and assignment operator to prevent copying
     Exchange(const Exchange&) = delete;
     Exchange& operator=(const Exchange&) = delete;
@@ -75,7 +79,9 @@ private:
     /// the name of the exchange
     std::string exchangeName;
     /// Order and Execution ID sequence generator
-    IDGenerator globalIdSequence;
+    IDGenerator idGenerator;
+    /// a queue of all the executions in the book
+    std::queue<std::unique_ptr<Execution>> executionsQueue;
 };
 
 #endif /* Exchange_hpp */

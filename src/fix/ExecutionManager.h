@@ -33,12 +33,14 @@
 #include <queue>
 #include <memory>
 
+
 class ExecutionManager {
 public:
     ExecutionManager(Exchange& exchange);
 
     // Retrieve and remove the next execution from the queue
-    void processNextExecution();
+    void reportExecution();
+    void updateOrder(std::unique_ptr<Execution> executionToReport);
 
 private:
     Exchange& exchange;

@@ -47,9 +47,8 @@ public:
 
     void addOrderToLimit(const OrderData& orderData, Book& book, uint64_t newOrderId);
     
-    void processFill(int& sharesTaker, Side takerSide, uint64_t orderId, Book& book);
-    
-    void logExecution(int executionVolume, Side& takerSide, uint64_t takerOrderId, Order* makerOrder, Book& book, int takerShares);
+    void processFill(OrderData& takerData, uint64_t orderId, Book& book);
+    void logExecution(int executionVolume, uint64_t takerOrderId, OrderData& takerData, Order* makerOrder, Book& book);
     
     void decreaseSize();
 
