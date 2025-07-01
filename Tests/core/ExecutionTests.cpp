@@ -14,7 +14,7 @@ protected:
 
     void SetUp() override {
         exchange = std::make_unique<Exchange>("myExchange");
-        orderBook = std::make_unique<Book>(*exchange);
+        orderBook = std::make_unique<Book>(*exchange, "AAPL");
     }
 };
 
@@ -26,7 +26,7 @@ TEST_F(ExecutionTest, TestExecutionForCrossSpreadLimit) {
     orderBook->addOrderToBook(sellOrder);
     orderBook->addOrderToBook(buyOrder);
 
-    std::unique_ptr<Execution> execution = orderBook->popNextExecution();
+    std::unique_ptr<Execution> execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 1);
     EXPECT_EQ(execution->executionSize, 14);
@@ -36,6 +36,8 @@ TEST_F(ExecutionTest, TestExecutionForCrossSpreadLimit) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::PartialFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 47);
+    EXPECT_EQ(execution->makerClientId, 45);
 }
 
 // Test for execution on limit orders that complitely fill each other
@@ -46,7 +48,7 @@ TEST_F(ExecutionTest, TestExecutionForSameOppositeLimits) {
     orderBook->addOrderToBook(sellOrder);
     orderBook->addOrderToBook(buyOrder);
 
-    std::unique_ptr<Execution> execution = orderBook->popNextExecution();
+    std::unique_ptr<Execution> execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 1);
     EXPECT_EQ(execution->executionSize, 14);
@@ -56,6 +58,12 @@ TEST_F(ExecutionTest, TestExecutionForSameOppositeLimits) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::FullFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 46);
+    EXPECT_EQ(execution->makerClientId, 45);
+    EXPECT_EQ(execution->makerExecutedQuantity, 14);
+    EXPECT_EQ(execution->takerExecutedQuantity, 14);
+    EXPECT_NEAR(execution->takerAvgPrice, 45.12, 1e-5);
+    EXPECT_NEAR(execution->takerAvgPrice, 45.12, 1e-5);
 }
 
 // Test for multiple execution
@@ -68,7 +76,7 @@ TEST_F(ExecutionTest, TestMultipleExecutions) {
     orderBook->addOrderToBook(sellOrder2);
     orderBook->addOrderToBook(buyOrder1);
 
-    std::unique_ptr<Execution> execution = orderBook->popNextExecution();
+    std::unique_ptr<Execution> execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 1);
     EXPECT_EQ(execution->orderTakerId, 2);
     EXPECT_EQ(execution->executionSize, 14);
@@ -78,8 +86,14 @@ TEST_F(ExecutionTest, TestMultipleExecutions) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::PartialFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 48);
+    EXPECT_EQ(execution->makerClientId, 45);
+    EXPECT_EQ(execution->makerExecutedQuantity, 14);
+    EXPECT_EQ(execution->takerExecutedQuantity, 14);
+    EXPECT_EQ(execution->makerAvgPrice, 45);
+    EXPECT_EQ(execution->takerAvgPrice, 45);
     
-    execution = orderBook->popNextExecution();
+    execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 2);
     EXPECT_EQ(execution->executionSize, 6);
@@ -89,6 +103,12 @@ TEST_F(ExecutionTest, TestMultipleExecutions) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::FullFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 48);
+    EXPECT_EQ(execution->makerClientId, 47);
+    EXPECT_EQ(execution->makerExecutedQuantity, 6);
+    EXPECT_EQ(execution->takerExecutedQuantity, 20);
+    EXPECT_EQ(execution->makerAvgPrice, 50);
+    EXPECT_NEAR(execution->takerAvgPrice, 46.5, 1e-5);
 }
 
 // Test for multiple execution
@@ -99,7 +119,7 @@ TEST_F(ExecutionTest, TestExecutionFor2LimitCrossSpread) {
     orderBook->addOrderToBook(sellOrder);
     orderBook->addOrderToBook(buyOrder);
 
-    std::unique_ptr<Execution> execution = orderBook->popNextExecution();
+    std::unique_ptr<Execution> execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 1);
     EXPECT_EQ(execution->executionSize, 10);
@@ -109,11 +129,17 @@ TEST_F(ExecutionTest, TestExecutionFor2LimitCrossSpread) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::FullFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 47);
+    EXPECT_EQ(execution->makerClientId, 45);
+    EXPECT_EQ(execution->makerExecutedQuantity, 10);
+    EXPECT_EQ(execution->takerExecutedQuantity, 10);
+    EXPECT_EQ(execution->makerAvgPrice, 45);
+    EXPECT_EQ(execution->takerAvgPrice, 45);
     
     OrderData buyOrder1(Side::Buy, 20, 48, 50, OrderType::Limit);
     orderBook->addOrderToBook(buyOrder1);
 
-    execution = orderBook->popNextExecution();
+    execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 2);
     EXPECT_EQ(execution->executionSize, 4);
@@ -123,6 +149,12 @@ TEST_F(ExecutionTest, TestExecutionFor2LimitCrossSpread) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::PartialFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 48);
+    EXPECT_EQ(execution->makerClientId, 45);
+    EXPECT_EQ(execution->makerExecutedQuantity, 14);
+    EXPECT_EQ(execution->takerExecutedQuantity, 4);
+    EXPECT_EQ(execution->makerAvgPrice, 45);
+    EXPECT_EQ(execution->takerAvgPrice, 45);
 }
 
 // Market orders execution tests
@@ -133,7 +165,7 @@ TEST_F(ExecutionTest, ExecutionSingleMarketOrder) {
     orderBook->addOrderToBook(orderData1);
     orderBook->placeMarketOrder(orderData2);
     
-    std::unique_ptr<Execution> execution = orderBook->popNextExecution();
+    std::unique_ptr<Execution> execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 1);
     EXPECT_EQ(execution->executionSize, 1);
@@ -143,6 +175,12 @@ TEST_F(ExecutionTest, ExecutionSingleMarketOrder) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::FullFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 3);
+    EXPECT_EQ(execution->makerClientId, 1);
+    EXPECT_EQ(execution->makerExecutedQuantity, 1);
+    EXPECT_EQ(execution->takerExecutedQuantity, 1);
+    EXPECT_EQ(execution->makerAvgPrice, 30);
+    EXPECT_EQ(execution->takerAvgPrice, 30);
 }
 
 // Market orders execution tests
@@ -156,7 +194,7 @@ TEST_F(ExecutionTest, ExecutionSingleMarketOrderThatFills2Limits) {
     orderBook->addOrderToBook(orderData2);
     orderBook->placeMarketOrder(orderData3);
     
-    std::unique_ptr<Execution> execution = orderBook->popNextExecution();
+    std::unique_ptr<Execution> execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 0);
     EXPECT_EQ(execution->orderTakerId, 2);
     EXPECT_EQ(execution->executionSize, 3);
@@ -165,9 +203,15 @@ TEST_F(ExecutionTest, ExecutionSingleMarketOrderThatFills2Limits) {
     EXPECT_EQ(execution->makerExecType, ExecutionType::FullFill);
     EXPECT_EQ(execution->takerExecType, ExecutionType::PartialFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
-    EXPECT_EQ(execution->sideTaker, Side::Buy);    
+    EXPECT_EQ(execution->sideTaker, Side::Buy); 
+    EXPECT_EQ(execution->takerClientId, 3);
+    EXPECT_EQ(execution->makerClientId, 1);
+    EXPECT_EQ(execution->makerExecutedQuantity, 3);
+    EXPECT_EQ(execution->takerExecutedQuantity, 3);
+    EXPECT_EQ(execution->makerAvgPrice, 30);
+    EXPECT_EQ(execution->takerAvgPrice, 30);
     
-    execution = orderBook->popNextExecution();
+    execution = exchange->popNextExecution();
     EXPECT_EQ(execution->orderMakerId, 1);
     EXPECT_EQ(execution->orderTakerId, 2);
     EXPECT_EQ(execution->executionSize, 4);
@@ -177,4 +221,10 @@ TEST_F(ExecutionTest, ExecutionSingleMarketOrderThatFills2Limits) {
     EXPECT_EQ(execution->takerExecType, ExecutionType::FullFill);
     EXPECT_EQ(execution->sideMaker, Side::Sell);
     EXPECT_EQ(execution->sideTaker, Side::Buy);
+    EXPECT_EQ(execution->takerClientId, 3);
+    EXPECT_EQ(execution->makerClientId, 2);
+    EXPECT_EQ(execution->makerExecutedQuantity, 4);
+    EXPECT_EQ(execution->takerExecutedQuantity, 7);
+    EXPECT_EQ(execution->makerAvgPrice, 40);
+    EXPECT_NEAR(execution->takerAvgPrice, 35.71, 1e-5);
 }

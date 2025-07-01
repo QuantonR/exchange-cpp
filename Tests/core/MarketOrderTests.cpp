@@ -14,7 +14,7 @@ protected:
 
     void SetUp() override {
         exchange = std::make_unique<Exchange>("myExchange");
-        orderBook = std::make_unique<Book>(*exchange);
+        orderBook = std::make_unique<Book>(*exchange, "AAPL");
     }
 };
 

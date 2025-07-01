@@ -15,7 +15,7 @@ protected:
 
     void SetUp() override {
         exchange = std::make_unique<Exchange>("myExchange");
-        orderBook = std::make_unique<Book>(*exchange);
+        orderBook = std::make_unique<Book>(*exchange, "AAPL");
     }
 };
 
@@ -346,56 +346,42 @@ TEST_F(LimitOrderTest, LimitFillsBookAndPlaceOrder) {
 }
 
 // Test for orders with same client id
-//TEST_F(LimitOrderTest, TestOrdersSameClientIdNoExecutionBestLimits) {
-//    OrderData orderData1(Side::Sell, 20, 58, 50, OrderType::Limit);
-//    OrderData orderData2(Side::Buy, 10, 58, 60, OrderType::Limit); // Order that crosses the spread
-//
-//    orderBook->addOrderToBook(orderData1);
-//    orderBook->addOrderToBook(orderData2);
-//
-//    EXPECT_EQ(orderBook->getSellSide()->findLimit(5000)->getSize(), 1);
-//    EXPECT_EQ(orderBook->getSellSide()->getBestLimit()->getLimitPrice(), 5000);
-//    
-//    EXPECT_EQ(orderBook->getBuySide()->findLimit(6000)->getSize(), 1);
-//    EXPECT_EQ(orderBook->getBuySide()->getBestLimit()->getLimitPrice(), 6000);
-//}
-//    
-//// Test for orders with same client id
-//TEST_F(LimitOrderTest, TestOrdersSameClientIdNoExecution) {
-//    OrderData orderData1(Side::Sell, 20, 58, 50, OrderType::Limit);
-//    OrderData orderData2(Side::Sell, 30, 59, 45, OrderType::Limit);
-//
-//    OrderData orderData3(Side::Buy, 40, 58, 60, OrderType::Limit); // Order that crosses the spread
-//
-//    orderBook->addOrderToBook(orderData1);
-//    orderBook->addOrderToBook(orderData2);
-//    orderBook->addOrderToBook(orderData3);
-//    
-//    EXPECT_EQ(orderBook->getSellSide()->findLimit(4500), nullptr);
-//    
-//    EXPECT_EQ(orderBook->getSellSide()->findLimit(5000)->getSize(), 1);
-//    EXPECT_EQ(orderBook->getSellSide()->getBestLimit()->getLimitPrice(), 5000);
-//    
-//    EXPECT_EQ(orderBook->getBuySide()->findLimit(6000)->getSize(), 1);
-//    EXPECT_EQ(orderBook->getBuySide()->getBestLimit()->getLimitPrice(), 6000);
-//}
-//
-//// Test for orders with same client id
-//TEST_F(LimitOrderTest, TestOrdersSameClientIdWithOtherOrdersInBook) {
-//    OrderData orderData1(Side::Sell, 30, 59, 45, OrderType::Limit);
-//    OrderData orderData2(Side::Sell, 20, 58, 45, OrderType::Limit);
-//    OrderData orderData3(Side::Sell, 30, 60, 45, OrderType::Limit);
-//
-//    OrderData orderData4(Side::Buy, 70, 58, 60, OrderType::Limit); // Order that crosses the spread
-//
-//    orderBook->addOrderToBook(orderData1);
-//    orderBook->addOrderToBook(orderData2);
-//    orderBook->addOrderToBook(orderData3);
-//    orderBook->addOrderToBook(orderData4);
-//    
-//    EXPECT_EQ(orderBook->getSellSide()->findLimit(4500)->getSize(), 1);
-//    EXPECT_EQ(orderBook->getSellSide()->getBestLimit()->getLimitPrice(), 5000);
-//    
-//    EXPECT_EQ(orderBook->getBuySide()->findLimit(6000)->getSize(), 1);
-//    EXPECT_EQ(orderBook->getBuySide()->getBestLimit()->getLimitPrice(), 6000);
-//}
+TEST_F(LimitOrderTest, TestOrdersSameClientIdNoExecutionBestLimits) {
+    OrderData orderData1(Side::Sell, 20, 58, 50, OrderType::Limit);
+    OrderData orderData2(Side::Buy, 10, 58, 60, OrderType::Limit); // Order that crosses the spread
+
+    orderBook->addOrderToBook(orderData1);
+    EXPECT_THROW({
+        orderBook->addOrderToBook(orderData2);
+    }, std::runtime_error);
+}
+    
+// Test for orders with same client id
+TEST_F(LimitOrderTest, TestOrdersSameClientIdNoExecution) {
+    OrderData orderData1(Side::Sell, 20, 58, 50, OrderType::Limit);
+    OrderData orderData2(Side::Sell, 30, 59, 45, OrderType::Limit);
+
+    OrderData orderData3(Side::Buy, 40, 58, 60, OrderType::Limit); // Order that crosses the spread
+
+    orderBook->addOrderToBook(orderData1);
+    orderBook->addOrderToBook(orderData2);
+    EXPECT_THROW({
+        orderBook->addOrderToBook(orderData3);
+    }, std::runtime_error);
+}
+
+// Test for orders with same client id
+TEST_F(LimitOrderTest, TestOrdersSameClientIdWithOtherOrdersInBook) {
+    OrderData orderData1(Side::Sell, 30, 59, 45, OrderType::Limit);
+    OrderData orderData2(Side::Sell, 20, 58, 45, OrderType::Limit);
+    OrderData orderData3(Side::Sell, 30, 60, 45, OrderType::Limit);
+
+    OrderData orderData4(Side::Buy, 70, 58, 60, OrderType::Limit); // Order that crosses the spread
+
+    orderBook->addOrderToBook(orderData1);
+    orderBook->addOrderToBook(orderData2);
+    orderBook->addOrderToBook(orderData3);
+    EXPECT_THROW({
+        orderBook->addOrderToBook(orderData4);
+    }, std::runtime_error);
+}
