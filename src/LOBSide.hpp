@@ -1,230 +1,269 @@
-// An order book implementation
-//
-// MIT License
-//
-// Copyright (c) 2024 Riccardo Canton
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+#pragma once
 
-#ifndef LOBSIDE_HPP
-#define LOBSIDE_HPP
-
-#include <map>
-#include <memory>
+#include <cstdint>
+#include <vector>
+#include <stdexcept>
 #include "Limit.h"
+#include "Order.h"
 #include "Side.hpp"
-
-class Book;
-class Limit;
 
 /**
  * @class LOBSide
- * @brief Manages the buy or sell side of the order book.
- * @tparam S Side of the order book (buy or sell).
+ * @brief Manages one side of the order book (buy or sell) using a bitmap for fast price lookup.
+ * @tparam S The side of the book (Side::Buy or Side::Sell).
  */
 template<Side S>
 class LOBSide {
 public:
-    LOBSide(Book& book);
+    static constexpr int32_t MIN_PRICE = 0;
+    static constexpr int32_t MAX_PRICE = 200000; // $2000.00 x100
+    static constexpr int32_t RANGE = MAX_PRICE - MIN_PRICE + 1;
+    static constexpr int32_t BITMAP_SIZE = (RANGE + 63) / 64;
 
-    Limit* findLimit(int limitPrice) const;
-    void addOrderToSide(OrderData& orderData, OrderIdSequence& orderIdSequence);
-    void placeMarketOrder(int volume);
-    void executeOrder(int& volume, Limit*& LimitToExecute);
-    void cancelLimit(Limit* limitToCancel);
+    LOBSide();
 
-    LOBSide(const LOBSide&) = delete;
-    LOBSide& operator=(const LOBSide&) = delete;
+    void addOrder(int32_t price, Order* order);
+    void removeOrder(int32_t price, Order* order);
+    void executeMarket(int32_t volume);
+    void executeMatching(int32_t& volume);
+    void adjustTotalVolume(int delta);
 
-    // getters
-    Limit* getBestLimit() const;
-    int getSideVolume() const;
-    const std::map<int, std::unique_ptr<Limit>>& getSideTree() const;
-    
+    Limit* getLimit(int32_t price);
+    Limit* getBestLimit();
+    int32_t getBestPrice() const;
+    int32_t getTotalVolume() const;
+
 private:
-    /// Stores all limits for this side, mapped by limit price
-    std::map<int, std::unique_ptr<Limit>> sideTree;
-    /// Total volume of orders for this side
-    int sideVolume;
-    /// Pointer to the best limit for this side
-    Limit* bestLimit;
-    
-    Book& book;
-    
-    void updateBestLimit();
-    
-    static int getCurrentTimeSeconds();
+    std::vector<Limit> limits;
+    uint64_t bitmap[BITMAP_SIZE]{};
+    int32_t totalVolume;
+    int32_t bestPrice;
+
+    void updateBestPrice();
 };
 
 /**
- * @brief Constructor that initializes the side of the order book.
- * @param book Reference to the order book to which this side belongs.
+ * @brief Constructs the LOBSide object.
+ *        Initializes all price levels (Limit objects) across the configured price range,
+ *        reserves storage for performance, and sets the initial best price based on the side.
  */
 template<Side S>
-LOBSide<S>::LOBSide(Book& book) : sideVolume(0), bestLimit(nullptr), book(book) {}
-
-/**
- * @brief Adds an order to the side of the order book.
- * @param orderData Reference to the order data containing the order details.
- * @param orderIdSequence Reference to the OrderIdSequence for generating a unique order ID.
- */
-template<Side S>
-void LOBSide<S>::addOrderToSide(OrderData& orderData, OrderIdSequence& orderIdSequence) {
-    
-    sideVolume += orderData.shares;
-    Limit* limitToAdd = findLimit(orderData.limit.value());
-    if (!limitToAdd) {
-        auto newLimit = std::make_unique<Limit>(orderData.limit.value());
-        limitToAdd = newLimit.get();
-        sideTree.emplace(orderData.limit.value(), std::move(newLimit));
-        updateBestLimit();
+LOBSide<S>::LOBSide()
+    : totalVolume(0),
+      bestPrice(S == Side::Buy ? -1 : MAX_PRICE + 1)
+{
+    limits.reserve(RANGE);
+    for (int32_t i = 0; i < RANGE; ++i) {
+        limits.emplace_back(i);
     }
-
-    limitToAdd->addOrderToLimit(orderData, book, orderIdSequence);
 }
 
 /**
- * @brief Finds a limit by its price.
- * @param limitPrice Price of the limit.
- * @return Pointer to the limit if found, nullptr otherwise.
+ * @brief Adds a new order at the specified price.
+ *        Updates the bitmap and best price if necessary.
+ * @param price The price level (in cents).
+ * @param order Pointer to the order to add.
  */
 template<Side S>
-Limit* LOBSide<S>::findLimit(int limitPrice) const {
-    
-    auto result = sideTree.find(limitPrice);
-    if (result == sideTree.end()) {
+void LOBSide<S>::addOrder(int32_t price, Order* order) {
+    auto& limit = limits[price];
+    if (limit.empty()) {
+        int chunk = price / 64;
+        int bit = price % 64;
+        bitmap[chunk] |= (1ULL << bit);
+    }
+
+    limit.addOrder(order);
+    order->setParentLimit(&limit);
+    totalVolume += order->getShares();
+
+    if constexpr (S == Side::Buy) {
+        if (price > bestPrice)
+            bestPrice = price;
+    } else {
+        if (price < bestPrice)
+            bestPrice = price;
+    }
+}
+
+/**
+ * @brief Removes an order from the specified price level.
+ *        Updates the bitmap and best price if necessary.
+ * @param price The price level (in cents).
+ * @param order Pointer to the order to remove.
+ */
+template<Side S>
+void LOBSide<S>::removeOrder(int32_t price, Order* order) {
+    auto& limit = limits[price];
+    limit.removeOrder(order);
+    totalVolume -= order->getShares();
+
+    if (limit.empty()) {
+        int chunk = price / 64;
+        int bit = price % 64;
+        bitmap[chunk] &= ~(1ULL << bit);
+        updateBestPrice();
+    }
+}
+
+/**
+ * @brief Returns a pointer to the limit object at the given price.
+ * @param price The price level.
+ * @return Pointer to Limit.
+ */
+template<Side S>
+Limit* LOBSide<S>::getLimit(int32_t price) {
+    return &limits[price];
+}
+
+/**
+ * @brief Returns a pointer to the current best limit (top of book).
+ * @return Pointer to best Limit or nullptr if the book is empty.
+ */
+template<Side S>
+Limit* LOBSide<S>::getBestLimit() {
+    if (bestPrice < MIN_PRICE || bestPrice > MAX_PRICE)
         return nullptr;
-    } else {
-        return result->second.get();
-    }
+    return &limits[bestPrice];
 }
 
 /**
- * @brief Updates the best limit for the side, which is the highest price for buy side
- *        and the lowest price for sell side.
+ * @brief Returns the current best price on this side of the book.
+ * @return Best price (in cents).
  */
 template<Side S>
-void LOBSide<S>::updateBestLimit() {
-    
-    if (sideTree.empty()) {
-        bestLimit = nullptr;
+int32_t LOBSide<S>::getBestPrice() const {
+    return bestPrice;
+}
+
+/**
+ * @brief Returns the total volume of all orders on this side.
+ * @return Total volume.
+ */
+template<Side S>
+int32_t LOBSide<S>::getTotalVolume() const {
+    return totalVolume;
+}
+
+/**
+ * @brief Updates the best price after orders are removed.
+ */
+template<Side S>
+void LOBSide<S>::updateBestPrice() {
+    bestPrice = S == Side::Buy ? -1 : MAX_PRICE + 1;
+
+    if constexpr (S == Side::Buy) {
+        for (int i = BITMAP_SIZE - 1; i >= 0; --i) {
+            if (bitmap[i]) {
+                int pos = 63 - __builtin_clzll(bitmap[i]);
+                bestPrice = i * 64 + pos;
+                return;
+            }
+        }
     } else {
-        if constexpr (S == Side::Buy) {
-            bestLimit = sideTree.rbegin()->second.get();  // Highest price for buy side
-        } else if constexpr (S == Side::Sell) {
-            bestLimit = sideTree.begin()->second.get();   // Lowest price for sell side
+        for (int i = 0; i < BITMAP_SIZE; ++i) {
+            if (bitmap[i]) {
+                int pos = __builtin_ctzll(bitmap[i]);
+                bestPrice = i * 64 + pos;
+                return;
+            }
         }
     }
 }
 
 /**
- * @brief Places a market order, executing it against existing limit orders on the side.
- * @param volume Volume of the market order.
- * @throws std::runtime_error if the market order size is too large to be executed
- *         or if no corresponding orders are available.
+ * @brief Executes a market order, consuming volume until fully filled or the book is empty.
+ *        Throws if insufficient liquidity.
+ * @param volume The desired volume to execute.
  */
 template<Side S>
-void LOBSide<S>::placeMarketOrder(int volume) {
-    if (volume > sideVolume) {
-        throw std::runtime_error("The market order size is too big and it can't be executed right now.");
+void LOBSide<S>::executeMarket(int32_t volume) {
+    if (volume > totalVolume)
+        throw std::runtime_error("Market order volume exceeds available liquidity.");
+
+    int32_t originalVolume = volume;
+
+    while (volume > 0 && bestPrice >= MIN_PRICE && bestPrice <= MAX_PRICE) {
+        Limit& limit = limits[bestPrice];
+        Order* order = limit.getHead();
+
+        while (volume > 0 && order) {
+            int orderShares = order->getShares();
+            if (volume >= orderShares) {
+                volume -= orderShares;
+                totalVolume -= orderShares;
+                limit.adjustVolume(-orderShares);
+
+                Order* next = order->getNextOrder();
+                limit.removeOrder(order);
+                order = next;
+            } else {
+                order->setShares(orderShares - volume);
+                totalVolume -= volume;
+                limit.adjustVolume(-volume);
+                volume = 0;
+            }
+        }
+
+        if (limit.empty()) {
+            int chunk = bestPrice / 64;
+            int bit = bestPrice % 64;
+            bitmap[chunk] &= ~(1ULL << bit);
+            updateBestPrice();
+        } else {
+            break;
+        }
+    }
+}
+
+/**
+ * @brief Executes matching volume against the best limit, decrementing the volume reference.
+ * @param volume Reference to the remaining volume to fill (decrements as filled).
+ */
+template<Side S>
+void LOBSide<S>::executeMatching(int32_t& volume) {
+    if (volume > totalVolume) {
+        throw std::runtime_error("Market order volume exceeds available liquidity.");
     }
 
-    Limit* limitToExecute = bestLimit;
+    while (volume > 0 && bestPrice >= MIN_PRICE && bestPrice <= MAX_PRICE) {
+        Limit& limit = limits[bestPrice];
+        Order* order = limit.getHead();
 
-    if (limitToExecute == nullptr) {
-        throw std::runtime_error("No corresponding orders available to match the market order.");
+        while (volume > 0 && order) {
+            int orderShares = order->getShares();
+            if (volume >= orderShares) {
+                volume -= orderShares;
+                totalVolume -= orderShares;
+                limit.adjustVolume(-orderShares);
+
+                Order* next = order->getNextOrder();
+                limit.removeOrder(order);
+                order = next;
+            } else {
+                order->setShares(orderShares - volume);
+                totalVolume -= volume;
+                limit.adjustVolume(-volume);
+                volume = 0;
+            }
+        }
+
+        if (limit.empty()) {
+            int chunk = bestPrice / 64;
+            int bit = bestPrice % 64;
+            bitmap[chunk] &= ~(1ULL << bit);
+            updateBestPrice();
+        } else {
+            break;
+        }
     }
-
-    while (volume > 0 && limitToExecute) {
-        executeOrder(volume, limitToExecute);
-    }
 }
 
 /**
- * @brief Executes an order against a specified limit.
- * @param volume Volume of the order to execute.
- * @param limitToExecute Pointer to the limit to execute against.
+ * @brief Adjusts the total volume by a given delta.
+ * @param delta Positive or negative change in volume.
  */
 template<Side S>
-void LOBSide<S>::executeOrder(int& volume, Limit*& limitToExecute) {
-    const int limitVolume = limitToExecute->getTotalVolume();
-    if (limitVolume > volume) {
-        limitToExecute->partialFill(volume);
-        sideVolume -= volume;
-        volume = 0;
-    } else {
-        int orderVolume = limitVolume;
-        limitToExecute->fullFill(book);
-        volume -= orderVolume;
-        sideVolume -= orderVolume;
-
-        cancelLimit(limitToExecute);
-        limitToExecute = bestLimit;
-    }
+void LOBSide<S>::adjustTotalVolume(int delta) {
+    totalVolume += delta;
 }
-
-/**
- * @brief Cancels a limit from the side.
- * @param limitToCancel Pointer to the limit to be canceled.
- */
-template<Side S>
-void LOBSide<S>::cancelLimit(Limit* limitToCancel) {
-    // Ensure limitToCancel is valid
-    if (!limitToCancel) return;
-
-    // Update the volume of the side tree
-    sideVolume -= limitToCancel->getTotalVolume();
-
-    // Erase the limit from the side tree
-    sideTree.erase(limitToCancel->getLimitPrice());
-
-    limitToCancel = nullptr;
-
-    // Update best limit after erasing
-    updateBestLimit();
-}
-
-/**
- * @brief Returns the best limit for the side.
- * @return Pointer to the best limit.
- */
-template<Side S>
-Limit* LOBSide<S>::getBestLimit() const {
-    return bestLimit;
-}
-
-/**
- * @brief Returns the total volume for the side.
- * @return Total volume.
- */
-template <Side S>
-int LOBSide<S>::getSideVolume() const {
-    return sideVolume;
-}
-
-/**
- * @brief Returns the side tree.
- * @return Reference to the side tree.
- */
-template<Side S>
-const std::map<int, std::unique_ptr<Limit>>& LOBSide<S>::getSideTree() const {
-    return sideTree;
-}
-
-#endif // LOBSIDE_HPP

@@ -44,7 +44,7 @@ class Exchange {
 public:
     Exchange(const std::string& exchangeName);
     
-    void addOrder(const std::string& ticker, OrderData& orderData);
+    void addOrder(const std::string& ticker, Side orderSide, int shares, float limit, OrderType orderType);
     
     void modifyLimitPrice(const std::string& ticker, int64_t orderId, int newLimitPrice);
     void modifyOrderSize(const std::string& ticker, int64_t orderId, int newSize);

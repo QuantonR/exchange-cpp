@@ -17,6 +17,9 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Include Google Test
 add_subdirectory(external/googletest)
 
+# Include Google Benchmark
+add_subdirectory(external/benchmark)
+
 # Define the list of source and header files
 set(SOURCES
     src/Book.cpp
@@ -32,7 +35,6 @@ set(HEADERS
     src/LOBSide.hpp
     src/Exchange.hpp
     src/Side.hpp
-    src/OrderData.h
     src/OrderType.h
     src/OrderIdSequence.h
 )
@@ -70,9 +72,10 @@ add_executable(exchange_benchmark
     benchmark/benchmark.cpp
 )
 
-# Link libraries to your benchmark executable
+# Google Benchmark
 target_link_libraries(exchange_benchmark PRIVATE
     exchange_lib
+    benchmark::benchmark
 )
 
 # Set properties for the C++ standard
@@ -85,3 +88,4 @@ set_target_properties(exchange_lib exchange_test exchange_benchmark PROPERTIES
 # Enable testing and define a test case
 enable_testing()
 add_test(NAME Google_Tests COMMAND exchange_test)
+

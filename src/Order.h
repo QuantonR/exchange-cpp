@@ -26,9 +26,9 @@
 
 #include <stdexcept>
 #include "Limit.h"
-#include "OrderData.h"
 #include "OrderIdSequence.h"
 #include "Side.hpp"
+#include "OrderType.h"
 
 // Forward declaration of Limit
 class Limit;
@@ -38,12 +38,12 @@ struct OrderData;
 
 /**
  * @class Order
- * @brief Represents an individual order in the order book, containing details like order type, limit price, shares, and its position in the order list.
+ * @brief Represents an individual order in the order book, containing order details such as side, size, limit price, timestamps, and links to neighboring orders.
  */
 class Order {
 public:
-    Order(const OrderData& orderData, Limit* parentLimit, OrderIdSequence& idSequence);
-
+    Order(Side orderSide, int shares, float limit, OrderType orderType, Limit* parentLimit, OrderIdSequence& idSequence);
+    
     Order& operator=(const Order&) = delete;
     Order(const Order&) = delete;
 
@@ -63,11 +63,19 @@ public:
     void setNextOrder(Order* nextOrder);
     void setPrevOrder(Order* prevOrder);
     void setShares(const int shares);
-
+    void setParentLimit(Limit* parentLimit);
 private:
     int64_t orderId;
-    OrderData orderData;
-    Order* nextOrder;
+    int32_t id;
+    int32_t shares;
+    int32_t limit; // -1 for market
+    int32_t entryTime;
+    int32_t eventTime;
+    Side orderSide;
+    OrderType orderType;
+    char padding[2]; // to align pointers
     Order* prevOrder;
+    Order* nextOrder;
     Limit* parentLimit;
+    char padding2[16]; // pad to 64 bytes exactly
 };

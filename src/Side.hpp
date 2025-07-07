@@ -32,7 +32,7 @@
  * @enum Side
  * @brief represents the side of an order (buy or sell).
  */
-enum class Side {
+enum class Side : uint8_t {
     Buy,
     Sell
 };
