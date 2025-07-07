@@ -28,7 +28,7 @@
  * @enum OrderType
  * @brief Represents the type of order, either a Limit order or a Market order.
  */
-enum class OrderType {
+enum class OrderType : uint8_t {
     Limit,
     Market
 };

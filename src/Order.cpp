@@ -1,26 +1,45 @@
 #include "Order.h"
 
 /**
- * @brief Constructs a new Order.
- * @param orderData The data associated with the order, including type, side, size, limit price, and timestamps.
- * @param parentLimit Pointer to the parent limit where this order resides.
- * @param idSequence Reference to the OrderIdSequence for generating a unique order ID.
+ * @brief Utility to get current timestamp in seconds.
+ * @return Current time as an integer timestamp.
  */
-Order::Order(const OrderData& orderData, Limit* parentLimit, OrderIdSequence& idSequence)
-    : orderData(orderData), parentLimit(parentLimit), nextOrder(nullptr), prevOrder(nullptr) {
-          
-    if (orderData.limit <= 0) {
-        throw std::invalid_argument("The price must be positive");
+inline int getCurrentTimeSeconds() {
+    return static_cast<int>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+}
+
+/**
+ * @brief Constructs a new Order.
+ * @param orderSide The side of the order (buy or sell).
+ * @param shares The number of shares.
+ * @param limit The limit price (in float), or -1 for market.
+ * @param orderType The order type (Limit or Market).
+ * @param parentLimit Pointer to the parent Limit object.
+ * @param idSequence Sequence generator to create a unique order ID.
+ * @throws std::invalid_argument if the order parameters are invalid.
+ */
+Order::Order(Side orderSide, int shares, float limit, OrderType orderType, Limit* parentLimit, OrderIdSequence& idSequence)
+    : orderSide(orderSide),
+      shares(shares),
+      limit(static_cast<int>(std::round(limit * 100))),
+      orderType(orderType),
+      entryTime(getCurrentTimeSeconds()),
+      eventTime(getCurrentTimeSeconds()),
+      parentLimit(parentLimit),
+      nextOrder(nullptr),
+      prevOrder(nullptr)
+{
+    if ((limit <= 0 && orderType == OrderType::Limit) || (limit != -1 && orderType == OrderType::Market)) {
+        throw std::invalid_argument("Incorrect limit price");
     }
-    if (orderData.shares <= 0) {
+    if (shares <= 0) {
         throw std::invalid_argument("The order size must be positive");
     }
-
     orderId = idSequence.getNextId();
 }
 
 /**
- * @brief Sets the next order in the list.
+ * @brief Sets the pointer to the next order in the linked list.
  * @param nextOrder Pointer to the next order.
  */
 void Order::setNextOrder(Order* nextOrder) {
@@ -28,7 +47,7 @@ void Order::setNextOrder(Order* nextOrder) {
 }
 
 /**
- * @brief Sets the previous order in the list.
+ * @brief Sets the pointer to the previous order in the linked list.
  * @param prevOrder Pointer to the previous order.
  */
 void Order::setPrevOrder(Order* prevOrder) {
@@ -37,30 +56,30 @@ void Order::setPrevOrder(Order* prevOrder) {
 
 /**
  * @brief Sets the number of shares for the order.
- * @param shares Number of shares.
+ * @param shares New number of shares.
  */
 void Order::setShares(const int shares) {
-    orderData.shares = shares;
+    this->shares = shares;
 }
 
 /**
- * @brief Returns the price limit of the order.
- * @return Price limit.
+ * @brief Returns the limit price of the order.
+ * @return Price limit as integer (in cents).
  */
 int Order::getLimit() const {
-    return orderData.limit.value();
+    return limit;
 }
 
 /**
- * @brief Returns the side of the order (buy or sell).
- * @return Order side.
+ * @brief Returns the side of the order.
+ * @return Side (Buy or Sell).
  */
 Side Order::getOrderSide() const {
-    return orderData.orderSide;
+    return orderSide;
 }
 
 /**
- * @brief Returns the next order in the list.
+ * @brief Returns a pointer to the next order.
  * @return Pointer to the next order.
  */
 Order* Order::getNextOrder() const {
@@ -68,7 +87,7 @@ Order* Order::getNextOrder() const {
 }
 
 /**
- * @brief Returns the previous order in the list.
+ * @brief Returns a pointer to the previous order.
  * @return Pointer to the previous order.
  */
 Order* Order::getPrevOrder() const {
@@ -76,49 +95,57 @@ Order* Order::getPrevOrder() const {
 }
 
 /**
- * @brief Returns the parent limit of the order.
- * @return Pointer to the parent limit.
+ * @brief Returns the parent Limit object.
+ * @return Pointer to the parent Limit.
  */
 Limit* Order::getParentLimit() const {
     return parentLimit;
 }
 
 /**
- * @brief Returns the entry time of the order.
- * @return Entry time.
+ * @brief Returns the entry timestamp of the order.
+ * @return Entry time in seconds since epoch.
  */
 int Order::getEntryTime() const {
-    return orderData.entryTime;
+    return entryTime;
 }
 
 /**
- * @brief Returns the event time of the order.
- * @return Event time.
+ * @brief Returns the timestamp of the last event for this order.
+ * @return Event time in seconds since epoch.
  */
 int Order::getEventTime() const {
-    return orderData.eventTime;
+    return eventTime;
 }
 
 /**
- * @brief Returns the number of shares for the order.
+ * @brief Returns the current number of shares.
  * @return Number of shares.
  */
 int Order::getShares() const {
-    return orderData.shares;
+    return shares;
 }
 
 /**
  * @brief Returns the type of the order.
- * @return The type of the order (Limit or Market).
+ * @return Order type (Limit or Market).
  */
 OrderType Order::getOrderType() const {
-    return orderData.orderType;
+    return orderType;
 }
 
 /**
- * @brief Returns the order ID.
+ * @brief Returns the unique order ID.
  * @return Order ID.
  */
 int64_t Order::getOrderId() const {
     return orderId;
+}
+
+/**
+ * @brief Sets the parent Limit object for this order.
+ * @param parentLimit Pointer to the parent Limit.
+ */
+void Order::setParentLimit(Limit* parentLimit) {
+    this->parentLimit = parentLimit;
 }

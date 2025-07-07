@@ -1,163 +1,101 @@
 #include "Limit.h"
-#include "Book.h"
+#include "Order.h"
 
 /**
- * @brief Constructs a new Limit object representing a price level in the order book.
- * @param limitPrice The price associated with this limit.
+ * @brief Constructs a Limit representing a specific price level.
+ * @param price The price level for this limit (in cents).
  */
-Limit::Limit(int limitPrice)
-    : limitPrice(limitPrice), size(0), totalVolume(0),
-      headOrder(nullptr), tailOrder(nullptr) {}
+Limit::Limit(int32_t price)
+    : limitPrice(price), totalVolume(0), size(0), head(nullptr), tail(nullptr)
+{}
 
 /**
- * @brief Adds an order to this limit and updates the order book.
- * @param orderData The data associated with the order.
- * @param book Reference to the order book, used for updating the global order list.
- * @param idSequence Reference to the OrderIdSequence for generating a unique order ID.
+ * @brief Adds an order to this limit level.
+ *        The order is appended to the end of the linked list.
+ * @param order Pointer to the order to add.
  */
-void Limit::addOrderToLimit(const OrderData& orderData, Book& book, OrderIdSequence& idSequence) {
-    // This will create a new Order and add it to the Limit
-    auto newOrder = std::make_unique<Order>(orderData, this, idSequence);
-    Order* newOrderPtr = newOrder.get();
-
-    // Increment totalVolume and size for the Limit
-    totalVolume += orderData.shares;
+void Limit::addOrder(Order* order) {
+    totalVolume += order->getShares();
+    order->setPrevOrder(tail);
+    order->setNextOrder(nullptr);
+    if (tail)
+        tail->setNextOrder(order);
+    else
+        head = order;
+    tail = order;
     size += 1;
-
-    if (!headOrder) {
-        // If this is the first order, set head and tail to this order
-        headOrder = newOrderPtr;
-        tailOrder = headOrder;
-    } else {
-        newOrderPtr->setPrevOrder(tailOrder); // Link the new order with the current tail
-        tailOrder->setNextOrder(newOrderPtr); // Link the current tail with the new order
-        tailOrder = newOrderPtr; // tailOrder now points to the new order
-    }
-
-    // Use book.addOrderToAllOrders to update the allOrders map
-    book.addOrderToAllOrders(std::move(newOrder));
 }
 
 /**
- * @brief Partially fills orders at this limit until the remaining volume is zero or no more orders are left.
- * @param remainingVolume The volume that still needs to be filled.
+ * @brief Removes an order from this limit level.
+ *        Updates linked list pointers accordingly.
+ * @param order Pointer to the order to remove.
  */
-void Limit::partialFill(int remainingVolume) {
-    
-    totalVolume -= remainingVolume;
-    while (remainingVolume > 0 && headOrder) {
-        Order* order = getHeadOrder();
-        int orderShares = order->getShares();
+void Limit::removeOrder(Order* order) {
+    size -= 1;
+    if (order->getPrevOrder())
+        order->getPrevOrder()->setNextOrder(order->getNextOrder());
+    else
+        head = order->getNextOrder();
 
-        if (remainingVolume >= orderShares) {
-            remainingVolume -= orderShares;
-            decreaseSize();
-            Order* nxtOrder = order->getNextOrder();
-            headOrder = nxtOrder;
-            if (headOrder) {
-                headOrder->setPrevOrder(nullptr);
-            } else {
-                tailOrder = nullptr;
-            }
-        } else {
-            order->setShares(orderShares - remainingVolume);
-            remainingVolume = 0;
-        }
-    }
+    if (order->getNextOrder())
+        order->getNextOrder()->setPrevOrder(order->getPrevOrder());
+    else
+        tail = order->getPrevOrder();
 }
 
 /**
- * @brief Fully fills all orders at this limit and removes them from the order book.
- * @param book Reference to the order book, used for removing orders from the order map.
+ * @brief Adjusts the total volume at this price level.
+ * @param delta The change in volume (positive or negative).
  */
-void Limit::fullFill(Book& book) {
-    while (headOrder && tailOrder) {
-        Order* nxtOrder = headOrder->getNextOrder();
-
-        if (nxtOrder) {
-            nxtOrder->setPrevOrder(nullptr);
-        }
-        
-        // Use book.removeOrderFromAllOrders to update the allOrders map
-        book.removeOrderFromAllOrders(headOrder->getOrderId());
-        headOrder = nullptr;
-        headOrder = nxtOrder;
-    }
-
-    size = 0;
-    totalVolume = 0;
+void Limit::adjustVolume(int delta) {
+    totalVolume += delta;
 }
 
 /**
- * @brief Decreases the size of the limit.
+ * @brief Checks if this limit has any orders.
+ * @return True if no orders are present, false otherwise.
  */
-void Limit::decreaseSize() {
-    
-    if (size > 0) {
-        size -= 1;
-    }
+bool Limit::empty() const {
+    return head == nullptr;
 }
 
 /**
- * @brief Returns the price level of this limit.
- * @return The limit price.
+ * @brief Returns the total volume at this limit level.
+ * @return Sum of all order shares at this limit.
  */
-int Limit::getLimitPrice() const {
-    return limitPrice;
-}
-
-/**
- * @brief Returns the number of orders at this limit.
- * @return The number of orders (size).
- */
-int Limit::getSize() const {
-    return size;
-}
-
-/**
- * @brief Returns the total volume of shares at this limit.
- * @return The total volume of shares.
- */
-int Limit::getTotalVolume() const {
+int32_t Limit::getTotalVolume() const {
     return totalVolume;
 }
 
 /**
- * @brief Returns the first order in the linked list at this limit.
+ * @brief Returns the price level represented by this limit.
+ * @return The price (in cents).
+ */
+int32_t Limit::getLimitPrice() const {
+    return limitPrice;
+}
+
+/**
+ * @brief Returns the number of orders in this limit.
+ * @return Number of orders.
+ */
+int32_t Limit::getSize() const {
+    return size;
+}
+
+/**
+ * @brief Returns the first order in the linked list.
  * @return Pointer to the head order.
  */
-Order* Limit::getHeadOrder() const {
-    return headOrder;
+Order* Limit::getHead() const {
+    return head;
 }
 
 /**
- * @brief Returns the last order in the linked list at this limit.
+ * @brief Returns the last order in the linked list.
  * @return Pointer to the tail order.
  */
-Order* Limit::getTailOrder() const {
-    return tailOrder;
-}
-
-/**
- * @brief Sets the total volume of shares at this limit.
- * @param newVolume The new total volume to set.
- */
-void Limit::setTotalVolume(const int& newVolume) {
-    totalVolume = newVolume;
-}
-
-/**
- * @brief Sets the last order in the linked list at this limit.
- * @param newTailOrder Pointer to the new tail order.
- */
-void Limit::setTailOrder(Order* newTailOrder) {
-    tailOrder = newTailOrder;
-}
-
-/**
- * @brief Sets the first order in the linked list at this limit.
- * @param newHeadOrder Pointer to the new head order.
- */
-void Limit::setHeadOrder(Order* newHeadOrder) {
-    headOrder = newHeadOrder;
+Order* Limit::getTail() const {
+    return tail;
 }
